@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kabbalah — Geometría del Infinito</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ── */
+:root {
+  --accent: #c8a96e;
+  --accent-rgb: 200,169,110;
+  --mono: 'Bebas Neue', sans-serif;
+  --serif: 'Playfair Display', serif;
+  --body: 'DM Sans', sans-serif;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#050408;overflow:hidden;}
+
+#three-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;}
+
+/* ── HUD ── */
+#hud {
+  position:fixed; top:0; left:0; right:0;
+  z-index:50;
+  background:rgba(6,4,12,0.6);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+/* Each row is a proper flex line, centered */
+#hud-top {
+  display:flex; flex-direction:row; flex-wrap:wrap;
+  align-items:center; justify-content:center;
+  padding:3px 12px 2px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  gap:0;
+}
+#hud-bottom {
+  display:flex; flex-direction:row; flex-wrap:wrap;
+  align-items:center; justify-content:center;
+  padding:2px 12px 3px;
+  gap:0;
+}
+#hud-logo {
+  font-family:var(--mono); font-size:13px; letter-spacing:0.16em;
+  color:var(--accent); padding:6px 14px 6px 4px;
+  border-right:1px solid rgba(255,255,255,0.1);
+  margin-right:6px; flex-shrink:0; line-height:1;
+  white-space:nowrap;
+}
+
+
+.wb {
+  flex-shrink:0;
+  background:none; border:none;
+  cursor:pointer; border-radius:8px;
+  padding:7px 16px 8px;
+  transition:all 0.2s;
+  white-space:nowrap;
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+}
+.wb-he {
+  font-family:var(--serif); font-size:24px; line-height:1;
+  color:rgba(255,255,255,0.6);
+  transition:color 0.2s;
+  direction:rtl;
+}
+.wb-es {
+  font-family:var(--body); font-size:14px; font-weight:400;
+  letter-spacing:0.01em;
+  color:rgba(255,255,255,0.5);
+  transition:color 0.2s;
+}
+.wb:hover .wb-he { color:#fff; }
+.wb:hover .wb-es { color:rgba(255,255,255,0.8); }
+.wb:hover { background:rgba(255,255,255,0.07); }
+.wb.active { background:rgba(255,255,255,0.13); }
+.wb.active .wb-he { color:#fff; filter:drop-shadow(0 0 8px var(--wc,#c8a96e)); }
+.wb.active .wb-es { color:#fff; font-weight:500; }
+
+/* ── CENTER STAGE ── */
+#center-overlay {
+  position:fixed; top:0; left:0; right:0;
+  bottom:47vh; z-index:40; pointer-events:none;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:0;
+}
+
+/* Dark pill behind all center text — absolute contrast guarantee */
+#center-inner {
+  display:flex; flex-direction:column; align-items:center;
+  padding:20px 48px 24px;
+  background:rgba(4,2,10,0.72);
+  backdrop-filter:blur(24px) saturate(1.2);
+  border-radius:24px;
+  border:1px solid rgba(255,255,255,0.07);
+  box-shadow:0 0 80px rgba(4,2,10,0.8);
+}
+
+/* Hebrew letter — colored, never white so it won't blend */
+#co-he {
+  font-family: var(--serif);
+  font-size: clamp(88px,14vw,180px);
+  font-weight:700;
+  line-height:1; direction:rtl; letter-spacing:0.06em;
+  /* Color comes from word color var — always saturated, never white */
+  color: var(--wc, #c8a96e);
+  text-shadow:
+    0 0  8px rgba(255,255,255,0.9),
+    0 0 24px rgba(255,255,255,0.6),
+    0 0 60px var(--wc, #c8a96e),
+    0 0 120px var(--wc, #c8a96e);
+  transition: color 0.6s, text-shadow 0.6s,
+              opacity 0.7s cubic-bezier(0.16,1,0.3,1),
+              transform 0.7s cubic-bezier(0.16,1,0.3,1);
+  opacity:0; transform:translateY(16px) scale(0.97);
+}
+#co-he.visible { opacity:1; transform:translateY(0) scale(1); }
+
+/* Word name */
+#co-word {
+  font-family: var(--mono);
+  font-size: clamp(14px,2vw,22px);
+  letter-spacing:0.35em; text-transform:uppercase;
+  color:rgba(255,255,255,0.75);
+  opacity:0; margin-top:14px;
+  transition:opacity 0.5s 0.15s;
+}
+#co-word.visible { opacity:1; }
+
+/* Gematria */
+#co-gem {
+  display:flex; align-items:baseline; gap:10px;
+  opacity:0; margin-top:8px;
+  transition:opacity 0.5s 0.25s;
+}
+#co-gem.visible { opacity:1; }
+#co-gem-num {
+  font-family:var(--mono); font-size:clamp(32px,4.5vw,54px);
+  color:#fff; line-height:1; font-weight:400;
+  text-shadow:0 0 20px var(--wc, #c8a96e), 0 0 40px var(--wc, #c8a96e);
+}
+#co-gem-label {
+  font-family:var(--body); font-size:11px; font-weight:300;
+  letter-spacing:0.3em; text-transform:uppercase;
+  color:rgba(255,255,255,0.4);
+}
+
+/* ── BOTTOM PANEL ── */
+#panel {
+  position:fixed; bottom:0; left:0; right:0;
+  height:47vh; z-index:40;
+  pointer-events:all; overflow:hidden;
+}
+
+/* Glass surface */
+#panel-bg {
+  position:absolute; inset:0;
+  background:linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(5,4,8,0.82) 14%,
+    rgba(5,4,8,0.96) 28%
+  );
+  overflow-y:auto; overflow-x:hidden;
+  padding:20px 28px 32px;
+  display:flex; flex-direction:column; gap:0;
+}
+#panel-bg::-webkit-scrollbar{width:2px;}
+#panel-bg::-webkit-scrollbar-thumb{background:rgba(var(--accent-rgb),0.25);}
+#panel-bg{scrollbar-width:thin;scrollbar-color:rgba(var(--accent-rgb),0.2) transparent;}
+
+/* Letter cards — clean grid */
+#panel-letters {
+  display:flex; gap:6px; flex-wrap:wrap;
+  justify-content:center; flex-shrink:0;
+  margin-bottom:14px;
+}
+.pl {
+  display:flex; align-items:stretch; gap:0;
+  border:1px solid rgba(255,255,255,0.08);
+  overflow:hidden;
+  border-radius:12px;
+  flex:1; min-width:150px; max-width:230px;
+  opacity:0; transform:translateY(8px);
+  transition:opacity 0.4s, transform 0.4s, border-color 0.3s;
+  background:rgba(255,255,255,0.03);
+}
+.pl:hover { border-color:rgba(var(--accent-rgb),0.35); }
+.pl.in { opacity:1; transform:translateY(0); }
+
+/* Left accent strip with the letter */
+.pl-he-block {
+  display:flex; align-items:center; justify-content:center;
+  padding:10px 14px;
+  border-right:1px solid rgba(255,255,255,0.07);
+  flex-shrink:0; min-width:56px;
+}
+.pl-he {
+  font-family:var(--serif); font-size:clamp(28px,3.2vw,38px);
+  line-height:1; direction:rtl;
+  filter:drop-shadow(0 0 10px currentColor);
+}
+
+/* Right text block */
+.pl-text {
+  display:flex; flex-direction:column; justify-content:center;
+  gap:2px; padding:8px 12px;
+}
+.pl-name {
+  font-family:var(--mono); font-size:13px;
+  color:rgba(255,255,255,0.65); letter-spacing:0.06em;
+  font-weight:400;
+}
+.pl-desc {
+  font-family:var(--body); font-size:15px; font-weight:300;
+  color:rgba(255,255,255,0.92); line-height:1.45;
+}
+
+/* Epic text — protagonista */
+#panel-epic {
+  font-family:var(--body); font-size:clamp(15px,1.9vw,21px);
+  font-weight:300; font-style:italic;
+  color:rgba(255,255,255,0.88); line-height:1.9;
+  max-width:820px; margin:0 auto 10px;
+  text-align:center;
+  opacity:0; transition:opacity 0.6s 0.12s;
+}
+#panel-epic.in { opacity:1; }
+
+/* Thin separator */
+.sep {
+  width:40px; height:1px; margin:10px auto;
+  background:linear-gradient(90deg,transparent,rgba(var(--accent-rgb),0.4),transparent);
+}
+
+/* Siblings */
+#panel-siblings {
+  font-family:var(--body); font-size:clamp(13px,1.4vw,16px);
+  font-weight:300;
+  letter-spacing:0.02em; text-align:center;
+  opacity:0; transition:opacity 0.6s 0.25s;
+  color:rgba(var(--accent-rgb),0.75);
+  line-height:1.75;
+  /* No uppercase, no mono — just readable prose */
+}
+#panel-siblings.in { opacity:1; }
+
+/* ── NAV ARROWS — right edge ── */
+#nav {
+  position:fixed; top:50%; right:16px;
+  transform:translateY(-50%); z-index:50;
+  display:flex; flex-direction:column; gap:6px;
+}
+.nav-btn {
+  width:30px; height:30px;
+  background:rgba(5,4,8,0.65);
+  border:1px solid rgba(255,255,255,0.1);
+  backdrop-filter:blur(12px);
+  color:rgba(255,255,255,0.3);
+  font-size:11px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s; border-radius:50%;
+}
+.nav-btn:hover {
+  border-color:rgba(var(--accent-rgb),0.6);
+  color:var(--accent);
+  background:rgba(var(--accent-rgb),0.08);
+}
+
+/* ── WORD COLOR THEMING via CSS var ── */
+body { --wc: var(--accent); }
+/* text-shadow handled in #co-he rule above */
+/* co-gem-num color handled above */
+</style>
+</head>
+<body>
+<canvas id="three-canvas"></canvas>
+<div id="hud"><div id="hud-top"><span id="hud-logo">KBL//</span></div><div id="hud-bottom"></div></div>
+<div id="center-overlay">
+  <div id="center-inner">
+    <div id="co-he"></div>
+    <div id="co-word"></div>
+    <div id="co-gem">
+      <span id="co-gem-num"></span>
+      <span id="co-gem-label">Guematría</span>
+    </div>
+  </div>
+</div>
+<div id="nav">
+  <button class="nav-btn" onclick="prevWord()">▲</button>
+  <button class="nav-btn" onclick="nextWord()">▼</button>
+</div>
+<div id="panel">
+  <div id="panel-bg">
+    <div id="panel-letters"></div>
+    <div id="panel-epic"></div>
+    <div class="sep"></div>
+    <div id="panel-siblings"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const WORDS=[
+  {es:"Kabbalah",he:"קַבָּלָה",
+   ld:[{c:"ק",n:"Qof · 100",d:"El ojo de la aguja entre lo sagrado y lo profano"},{c:"ב",n:"Bet · 2",d:"La casa — primer lugar donde Dios eligió habitar"},{c:"ל",n:"Lamed · 30",d:"El toro aguijoneado — aprendizaje que duele y eleva"},{c:"ה",n:"He · 5",d:"El soplo divino añadido al nombre de Abraham"}],
+   g:137,epic:"137. La constante de estructura fina — α ≈ 1/137 — decide si existe la luz, si los átomos son estables, si el universo puede albergar vida. Feynman dijo que este número lo perseguía en sueños. Pauli murió en la habitación 137. La Kabbalah lleva este número grabado en su nombre desde hace tres mil años. No es casualidad. Es el código del Creador.",
+   sib:"≡ 137 · Constante de estructura fina (α) · 'Los cielos narran la gloria de Dios' = 137 palabras en hebreo",
+   r:180,g2:100,b:255,hex:"#c9a0ff"},
+  {es:"Ahavah — Amor",he:"אַהֲבָה",
+   ld:[{c:"א",n:"Aleph · 1",d:"El Uno — antes de toda creación, el primer silencio"},{c:"ה",n:"He · 5",d:"La ventana — el amor abre el corazón al infinito"},{c:"ב",n:"Bet · 2",d:"La casa — el amor construye hogar en el otro"},{c:"ה",n:"He · 5",d:"Segunda exhalación — el amor es doble respiración"}],
+   g:13,epic:"13. El mismo valor que Echad — Unidad. Amar es volverse Uno. Cuando dos amantes se unen suman 26, el valor exacto del nombre de Dios יהוה. El Zohar enseña que cada acto de amor genuino hace vibrar el Trono Divino. El amor no es un sentimiento humano. Es una fuerza cosmológica que desciende desde lo alto.",
+   sib:"≡ 13 · אֶחָד (Uno/Unidad) · Dos amantes = 26 = יהוה · El amor es la gravitación del alma",
+   r:255,g2:80,b:150,hex:"#ff8fa8"},
+  {es:"El — Dios",he:"אֵל",
+   ld:[{c:"א",n:"Aleph · 1",d:"El Uno infinito — antes del espacio y del tiempo"},{c:"ל",n:"Lamed · 30",d:"La única letra que supera la línea — el poder que no cabe en el alfabeto"}],
+   g:31,epic:"El nombre más antiguo de Dios en toda la escritura humana. Solo dos letras que encierran todo. Aleph: la unidad que precede a todos los números. Lamed: la única letra que asciende por encima de todas las demás. Y el secreto: 31 al revés es 13, Amor. Dios leído al revés es Amor. La Creación fue un acto de renuncia infinita.",
+   sib:"≡ 31 · לֹא (No/Nada) · גּוֹאֵל (Redentor) · Al revés: 13 = Ahavah = Amor puro",
+   r:255,g2:195,b:60,hex:"#ffd280"},
+  {es:"Or — Luz",he:"אוֹר",
+   ld:[{c:"א",n:"Aleph · 1",d:"El Uno — la fuente antes de toda emanación"},{c:"ו",n:"Vav · 6",d:"El clavo — el eje vertical que une cielo y tierra"},{c:"ר",n:"Resh · 200",d:"La cabeza — receptor cósmico de la revelación divina"}],
+   g:207,epic:"'Sea la luz.' La primera palabra de Dios no fue su nombre. Fue luz. Or = 207 = Ain Sof — el Infinito divino. La Luz y el Infinito comparten el mismo peso numérico. Los fotones no experimentan el tiempo — para la luz el universo ocurre en un instante eterno. La Kabbalah lo sabía: la Luz de Dios está fuera del tiempo.",
+   sib:"≡ 207 · רָז (Misterio) · אֵין סוֹף (Sin Fin) · La raíz de Torah y de Or es la misma luz",
+   r:255,g2:240,b:80,hex:"#fff060"},
+  {es:"Neshamah — Alma",he:"נְשָׁמָה",
+   ld:[{c:"נ",n:"Nun · 50",d:"El pez — el alma nada en el océano divino sin ahogarse"},{c:"ש",n:"Shin · 300",d:"El fuego sagrado — tres llamas que forman el nombre de Dios"},{c:"מ",n:"Mem · 40",d:"El agua primordial — el útero cósmico de toda existencia"},{c:"ה",n:"He · 5",d:"El soplo — el alma es literalmente el aliento de Dios"}],
+   g:395,epic:"Neshamah = 395 = Shamayim, los Cielos. Tu alma tiene el mismo peso que el firmamento entero. Dios no te dio un alma. Te convirtió en un alma. Eres un ser eterno disfrazado de cuerpo temporal, una chispa de lo Infinito navegando en el océano de la conciencia divina.",
+   sib:"≡ 395 · שָׁמַיִם (Cielos) · הַשֶּׁמֶשׁ (El Sol) · Tu alma pesa lo mismo que el firmamento",
+   r:80,g2:215,b:255,hex:"#90e8ff"},
+  {es:"Emet — Verdad",he:"אֱמֶת",
+   ld:[{c:"א",n:"Aleph · 1",d:"Primera letra — la Verdad comienza en el origen absoluto"},{c:"מ",n:"Mem · 40",d:"Letra 13ª — el centro exacto del alfabeto"},{c:"ת",n:"Tav · 400",d:"Última letra — la Verdad llega hasta el final de todo"}],
+   g:441,epic:"Emet toca el principio, el centro y el final del alfabeto. La Verdad no está en un punto — está en todo el recorrido. 441 = 21², cuadrado de Ehyeh — 'Yo Soy', el nombre que Dios dijo a Moisés en la zarza ardiente. La Verdad es Dios al cuadrado. La mentira vive al borde del precipicio. La Verdad sostiene el mundo.",
+   sib:"≡ 441 = 21² · אֶהְיֶה² (Yo Soy al cuadrado) · El sello de Dios es Emet · La mentira cae, la Verdad permanece",
+   r:60,g2:225,b:140,hex:"#80ffb8"},
+  {es:"Shalom — Paz",he:"שָׁלוֹם",
+   ld:[{c:"ש",n:"Shin · 300",d:"El fuego — la paz no es ausencia de fuego sino su dominio"},{c:"ל",n:"Lamed · 30",d:"El corazón en movimiento — la paz que fluye y nunca se congela"},{c:"ו",n:"Vav · 6",d:"El clavo — la paz conecta lo que el tiempo separó"},{c:"מ",n:"Mem · 40",d:"El océano profundo — quietud bajo la tormenta de la superficie"}],
+   g:376,epic:"Shalom no es ausencia de guerra. Su raíz Shalem significa completo, íntegro — el estado en que nada falta. Yerushaláyim lleva Shalom en su corazón. Pero 376 es también el valor de Esaú, el opuesto de Jacob. La paz verdadera no elimina al opuesto: lo integra. La paz que excluye no es Shalom.",
+   sib:"≡ 376 · עֵשָׂו (Esaú — el opuesto integrado) · נֶפֶשׁ (Alma vital) · Jerusalén lleva Shalom en su centro",
+   r:120,g2:170,b:255,hex:"#a8c8ff"},
+  {es:"Torah",he:"תּוֹרָה",
+   ld:[{c:"ת",n:"Tav · 400",d:"El sello — la firma de Dios al pie de toda la creación"},{c:"ו",n:"Vav · 6",d:"El clavo — une los 6 días con la eternidad que los trasciende"},{c:"ר",n:"Resh · 200",d:"La cabeza — inteligencia que recibe la revelación divina"},{c:"ה",n:"He · 5",d:"El soplo — la Torah es el aliento de Dios hecho palabra"}],
+   g:611,epic:"611. Moisés recibió 611 mandamientos. Los 2 primeros los recibió todo Israel de la Voz Divina sin intermediario. 611 + 2 = 613. La exactitud matemática es la firma de Dios. El Zohar revela que la Torah existió 2000 años antes de la creación: fue el plano arquitectónico del universo. Leer la Torah es leer el código fuente del cosmos.",
+   sib:"≡ 611 · 611 + 2 = 613 mitzvot · Torah y Or (Luz) comparten la misma raíz hebrea sagrada",
+   r:255,g2:165,b:60,hex:"#ffb870"},
+  {es:"Shejiná",he:"שְׁכִינָה",
+   ld:[{c:"ש",n:"Shin · 300",d:"El fuego sagrado — la Presencia se manifiesta en el fuego"},{c:"כ",n:"Kaf · 20",d:"La palma abierta — Dios sosteniendo el mundo con mano abierta"},{c:"י",n:"Yod · 10",d:"El punto primordial — la chispa que contiene toda la creación"},{c:"נ",n:"Nun · 50",d:"El pez eterno — la Presencia nada en todas las dimensiones"},{c:"ה",n:"He · 5",d:"El soplo femenino — el aspecto materno de Dios en el mundo"}],
+   g:385,epic:"La Shejiná es el aspecto femenino de Dios que bajó al exilio con la humanidad. Cuando el Templo fue destruido, la Shejiná lloró. 'En todo lugar al que Israel fue exiliado, la Shejiná fue con ellos.' Dios no envía al sufrimiento desde arriba. Dios desciende al sufrimiento contigo. Eso es amor cósmico.",
+   sib:"≡ 385 · La Shejiná baja al exilio · Dios elige sentir exactamente lo que tú sientes",
+   r:255,g2:100,b:220,hex:"#ffb0e8"},
+  {es:"Chayim — Vida",he:"חַיִּים",
+   ld:[{c:"ח",n:"Jet · 8",d:"El 8 — más allá de los 7 días, la dimensión de la eternidad"},{c:"י",n:"Yod · 10",d:"La chispa — el punto cuántico de donde explota la existencia"},{c:"י",n:"Yod · 10",d:"Segunda chispa — la vida requiere dos fuerzas en tensión"},{c:"מ",n:"Mem · 40",d:"El océano — la vida emerge del agua, del útero cósmico"}],
+   g:68,epic:"Chayim está en plural — la Vida es siempre múltiple, nunca sola. 68 = 4 × 17, y 17 es el valor de Tov — 'bueno'. Dios vio que era bueno 7 veces. 7 × 17 = 119 versículos del Salmo más largo, dedicado a la Torah. Vida, Bondad y Torah comparten el mismo ADN numérico. L'Chaim es la oración más corta: existir es el milagro más improbable del universo.",
+   sib:"≡ 68 = 4 × 17 (Tov/Bueno) · L'Chaim: la oración más corta y más profunda del mundo",
+   r:60,g2:255,b:160,hex:"#90ffcc"},
+  {es:"Tzimtzum",he:"צִמְצוּם",
+   ld:[{c:"צ",n:"Tzadik · 90",d:"El justo — solo el humilde da espacio genuino al otro"},{c:"מ",n:"Mem · 40",d:"Las aguas que se retiran — Dios se aparta para abrir paso"},{c:"צ",n:"Tzadik · 90",d:"Segunda contracción — el amor de Dios se repite eternamente"},{c:"ו",n:"Vav · 6",d:"El clavo — incluso en la retirada, Dios permanece unido"},{c:"מ",n:"Mem · 40",d:"El océano que regresa — el vacío sagrado se llenará de nuevo"}],
+   g:576,epic:"Tzimtzum: el acto más incomprensible del universo. Dios era infinito en todas partes. Para crear algo que no fuera Él, tuvo que retirarse de sí mismo — crear un vacío sagrado. El Ari Santo reveló esto en Safed en 1570: la Creación fue un acto de renuncia, no de expansión. Dios se hizo pequeño para que tú pudieras existir. 576 = 24². El tiempo nació de la contracción de lo Eterno.",
+   sib:"≡ 576 = 24² · El tiempo nació de lo Eterno · El Big Bang es el eco del primer Tzimtzum divino",
+   r:180,g2:100,b:255,hex:"#d4aaff"},
+  {es:"Olam — Universo",he:"עוֹלָם",
+   ld:[{c:"ע",n:"Ayin · 70",d:"El ojo — los 70 rostros de la Torah, los 70 pueblos del mundo"},{c:"ו",n:"Vav · 6",d:"El clavo — los 6 días de creación que sostienen el tiempo"},{c:"ל",n:"Lamed · 30",d:"El corazón que aprende — el universo es un aula infinita"},{c:"מ",n:"Mem · 40",d:"El océano primordial — de donde emergen todos los mundos posibles"}],
+   g:146,epic:"Olam significa universo, mundo y eternidad al mismo tiempo — en hebreo no hay diferencia entre el espacio y el tiempo. El Talmud (Shabbat 88b) revela que existieron 974 generaciones de almas antes de la creación de Adán — almas que Dios no dejó nacer al prever su maldad. 1000 generaciones estaban previstas; solo se permitieron 26, de Adán a Moisés, cuando la Torah fue entregada. El Midrash añade que Dios también creó mundos anteriores que no pudieron sostener su luz y fueron disueltos — la creación que hoy habitas es la que finalmente mereció existir. Olam comparte raíz con Ne'elam, lo oculto: el universo entero es el velo que oculta y revela a Dios simultáneamente.",
+   sib:"≡ 146 · Olam = Universo + Mundo + Eternidad en una sola palabra · Raíz de Ne'elam: lo oculto",
+   r:100,g2:180,b:255,hex:"#64b4ff"},
+  {es:"Bereshit — Creación",he:"בְּרֵאשִׁית",
+   ld:[{c:"ב",n:"Bet · 2",d:"La casa — la primera letra del universo, el principio de todo"},{c:"ר",n:"Resh · 200",d:"La cabeza — la inteligencia divina que concibe la creación"},{c:"א",n:"Aleph · 1",d:"El Uno — la unidad absoluta oculta en el corazón de la creación"},{c:"ש",n:"Shin · 300",d:"El fuego sagrado — la energía que enciende los mundos"},{c:"י",n:"Yod · 10",d:"La chispa — el punto cuántico de donde emerge todo lo visible"},{c:"ת",n:"Tav · 400",d:"El sello — la creación lleva la firma de Dios desde su primera palabra"}],
+   g:913,epic:"'Bereshit bara Elohim' — En el principio creó Dios. La primera palabra de toda la Torah, del universo entero. 913 en guematría contiene el número dorado oculto: los sabios del Talmud descubrieron que Bereshit puede leerse como Bara Shit — 'creó seis', los seis días. Pero la Bet inicial —la primera letra del cosmos— equivale a 2: Dios siempre crea en pares, en tensión de opuestos. Luz y oscuridad. Cielo y tierra. Tú y yo.",
+   sib:"≡ 913 · Primera palabra de la Torah y del universo · Bara Shit = 'creó seis días' · La Bet inicial: todo nace dual",
+   r:255,g2:140,b:80,hex:"#ff8c50"},
+  {es:"Yesod — Fundamento",he:"יְסוֹד",
+   ld:[{c:"י",n:"Yod · 10",d:"La chispa — de donde emana toda la energía descendente"},{c:"ס",n:"Samej · 60",d:"El círculo eterno — el apoyo sin principio ni fin"},{c:"ו",n:"Vav · 6",d:"El canal — por donde fluye la energía divina hacia el mundo"},{c:"ד",n:"Dalet · 4",d:"La puerta — umbral entre el mundo superior y el mundo de la acción"}],
+   g:80,epic:"Yesod es la novena sefirah del Árbol de la Vida — el canal que transmite toda la energía divina al mundo de la manifestación. 80 es el valor de Peh, la boca — porque Yesod es donde la Palabra Divina se convierte en Mundo. Todo lo que existe fue primero pronunciado desde Yesod. La realidad entera es el eco de esa voz primordial.",
+   sib:"≡ 80 · פֶּה (Boca — la Palabra que crea el mundo) · Canal entre lo Divino y lo Manifestado",
+   r:100,g2:200,b:255,hex:"#c0e8ff"},,
+  {es:"Ein Sof",he:"אֵין סוֹף",
+   ld:[{c:"א",n:"Aleph · 1",d:"El Uno — la unidad que precede a todo número y toda forma"},{c:"י",n:"Yod · 10",d:"La chispa de existencia — incluso la nada contiene potencial"},{c:"נ",n:"Nun · 50",d:"El pez en el océano infinito — la inmanencia dentro del Infinito"},{c:"ס",n:"Samej · 60",d:"El círculo cerrado — lo que no tiene principio ni fin"},{c:"ו",n:"Vav · 6",d:"El clavo que une — el Infinito se conecta con lo finito"},{c:"ף",n:"Peh sofit · 800",d:"La boca final — el Infinito habla y crea mundos"}],
+   g:207,
+   epic:"Ain Sof: Sin Fin. Antes de la creación no existía el espacio ni el tiempo — solo el Infinito sin límites, sin forma, sin nombre. El Zohar dice que Ain Sof no puede ser comprendido, descrito ni pensado. Toda descripción lo limita y por tanto lo falsifica. Es la única realidad que existe por sí misma — todo lo demás es emanación. Y sin embargo, Ain Sof eligió contraerse para que tú pudieras existir.",
+   sib:"≡ 207 = Or (Luz) · El Infinito y la Luz comparten el mismo peso numérico · Todo emana de Ain Sof hacia abajo",
+   r:255,g2:250,b:200,hex:"#fffac8"},
+  {es:"Da'at",he:"דַּעַת",
+   ld:[{c:"ד",n:"Dalet · 4",d:"La puerta — el umbral entre el conocer y el ser conocido"},{c:"ע",n:"Ayin · 70",d:"El ojo — el conocimiento que viene de ver con profundidad"},{c:"ת",n:"Tav · 400",d:"El sello — el conocimiento que transforma y concluye"}],
+   g:474,
+   epic:"Da'at es la sefirah oculta — no aparece en los diagramas del Árbol de la Vida porque no es una sefirah en el sentido ordinario. Es el punto de unión entre Jojmah (sabiduría) y Biná (comprensión), el momento en que el conocimiento se vuelve experiencia vivida. En hebreo, Da'at es también la palabra para la intimidad entre dos seres: 'Y Adán conoció a Eva.' El conocimiento verdadero es siempre unión.",
+   sib:"≡ 474 · Da'at = conocimiento íntimo · La sefirah oculta que une Jojmah y Biná · Conocer es unirse",
+   r:160,g2:220,b:255,hex:"#a0dcff"},
+  {es:"Keter — Corona",he:"כֶּתֶר",
+   ld:[{c:"כ",n:"Kaf · 20",d:"La palma abierta — la corona que recibe directamente de Ain Sof"},{c:"ת",n:"Tav · 400",d:"El sello — Keter lleva la firma del Infinito"},{c:"ר",n:"Resh · 200",d:"La cabeza — Keter es la cima del Árbol, el primer pensamiento divino"}],
+   g:620,
+   epic:"Keter es la Primera Sefirah — la Corona que corona el Árbol de la Vida. Es el primer destello de voluntad divina al contraerse Ain Sof, el punto antes de que existiera el punto. En Keter coexisten todos los opuestos sin contradicción: existencia y no-existencia, ser y no-ser. Los maestros cabalísticos dicen que Keter está tan próximo a Ain Sof que casi no puede distinguirse de Él.",
+   sib:"≡ 620 · Primera sefirah · La voluntad primordial de crear · Tan cercana a Ain Sof que casi es Él",
+   r:255,g2:255,b:240,hex:"#fffff0"},
+  {es:"Jojmah — Sabiduría",he:"חָכְמָה",
+   ld:[{c:"ח",n:"Jet · 8",d:"El número 8 — más allá del tiempo y la estructura"},{c:"כ",n:"Kaf · 20",d:"La palma — la sabiduría que sostiene y recibe el destello"},{c:"מ",n:"Mem · 40",d:"El océano — la sabiduría fluye como agua primordial"},{c:"ה",n:"He · 5",d:"El soplo — la sabiduría es el primer aliento del pensamiento"}],
+   g:73,
+   epic:"Jojmah es el primer destello de luz tras la voluntad de Keter — el rayo de intuición que existe antes de que el pensamiento pueda ser pensado. Es la sabiduría que llega como relámpago, sin razonamiento previo. El Zohar dice que Jojmah es el punto (Yod) que contiene toda la Torah — un punto sin dimensión que sin embargo alberga el universo entero.",
+   sib:"≡ 73 · Primera emanación visible · El relámpago de intuición divina · Principio activo y masculino",
+   r:220,g2:220,b:255,hex:"#dcdcff"},
+  {es:"Biná — Comprensión",he:"בִּינָה",
+   ld:[{c:"ב",n:"Bet · 2",d:"La casa — Biná es el vientre donde el destello de Jojmah se desarrolla"},{c:"י",n:"Yod · 10",d:"La chispa — la semilla de Jojmah que Biná recibe y expande"},{c:"נ",n:"Nun · 50",d:"El pez — la comprensión nada en las profundidades del mar"},{c:"ה",n:"He · 5",d:"El soplo — la comprensión que da forma a lo informe"}],
+   g:67,
+   epic:"Biná es la Gran Madre del Árbol — el útero cósmico que recibe el relámpago de Jojmah y lo desarrolla en forma y estructura. Si Jojmah es el padre que siembra, Biná es la madre que da a luz. De Biná nacen las siete sefirot inferiores como hijos. Los maestros la llaman la Shejiná superior: el primer aspecto femenino de Dios, la inteligencia que comprende porque contiene.",
+   sib:"≡ 67 · La Gran Madre del Árbol · Principio femenino superior · Contiene y desarrolla todo lo que Jojmah siembra",
+   r:200,g2:180,b:255,hex:"#c8b4ff"},
+  {es:"Jesed — Bondad",he:"חֶסֶד",
+   ld:[{c:"ח",n:"Jet · 8",d:"El número 8 — la bondad trasciende los límites del mundo natural"},{c:"ס",n:"Samej · 60",d:"El círculo — la bondad envuelve y sostiene sin condiciones"},{c:"ד",n:"Dalet · 4",d:"La puerta — Jesed abre la puerta a quien llega necesitado"}],
+   g:72,
+   epic:"Jesed es la cuarta sefirah — el amor incondicional, la gracia que se da sin merecer. Si existiera solo Jesed, el mundo sería un desbordamiento caótico de bien sin forma ni límite. Por eso está equilibrada por Guevurá, el rigor. 72 es también el número de los nombres de Dios extraídos del episodio del Mar Rojo — cada nombre una expresión de amor activo en el mundo.",
+   sib:"≡ 72 · Los 72 nombres de Dios · Amor que se da sin condiciones · Equilibrada por Guevurá",
+   r:100,g2:200,b:255,hex:"#64c8ff"},
+  {es:"Guevurá — Rigor",he:"גְּבוּרָה",
+   ld:[{c:"ג",n:"Guimel · 3",d:"El camello — la fuerza que camina por el desierto sin agua"},{c:"ב",n:"Bet · 2",d:"La casa — el rigor construye estructuras que duran"},{c:"ו",n:"Vav · 6",d:"El clavo — el poder que fija y delimita"},{c:"ר",n:"Resh · 200",d:"La cabeza — la inteligencia que sabe cuándo decir no"},{c:"ה",n:"He · 5",d:"El soplo — incluso el juicio tiene aliento divino"}],
+   g:216,
+   epic:"Guevurá es el rigor, la fuerza, el juicio. Sin Guevurá, la bondad de Jesed inundaría el mundo sin forma. Es el principio que pone límites, que dice no, que evalúa. 216 = 6³ — el cubo perfecto de la creación en seis días. Los maestros dicen que Guevurá no es crueldad sino precisión: la mano del cirujano que corta para sanar.",
+   sib:"≡ 216 = 6³ · El cubo perfecto · Juicio que equilibra el amor · La mano del cirujano",
+   r:255,g2:100,b:100,hex:"#ff6464"},
+  {es:"Tiferet — Belleza",he:"תִּפְאֶרֶת",
+   ld:[{c:"ת",n:"Tav · 400",d:"El sello — Tiferet lleva la firma de toda la creación"},{c:"פ",n:"Pe · 80",d:"La boca — Tiferet es la voz armónica del Árbol"},{c:"א",n:"Aleph · 1",d:"El Uno — en Tiferet todos los opuestos se reconcilian"},{c:"ר",n:"Resh · 200",d:"La cabeza — el sol en el centro del Árbol"},{c:"ת",n:"Tav · 400",d:"El sello final — la belleza que completa y equilibra"}],
+   g:1081,
+   epic:"Tiferet es el corazón del Árbol de la Vida — la sefirah central que armoniza todos los opuestos. Bondad y rigor, arriba y abajo, masculino y femenino: todo se reconcilia en Tiferet. Corresponde al sol, al corazón, al Rey. En la anatomía del Adam Kadmon, Tiferet es exactamente el centro del pecho. Los maestros dicen que aquí reside el alma: en el punto donde todos los caminos se cruzan.",
+   sib:"≡ 1081 · El corazón del Árbol · Armonía entre Jesed y Guevurá · El sol del cosmos espiritual",
+   r:255,g2:210,b:80,hex:"#ffd250"},
+  {es:"Netzaj — Victoria",he:"נֶצַח",
+   ld:[{c:"נ",n:"Nun · 50",d:"El pez — la victoria que fluye y persiste como el agua"},{c:"צ",n:"Tzadik · 90",d:"El justo — solo el íntegro puede perseverar hasta la victoria"},{c:"ח",n:"Jet · 8",d:"El 8 — la victoria que trasciende los ciclos naturales"}],
+   g:148,
+   epic:"Netzaj es la séptima sefirah — la eternidad, la victoria, la persistencia. Representa el deseo y la emoción en su forma más pura: la fuerza que impulsa hacia adelante sin rendirse. Corresponde al muslo derecho en el cuerpo de Adam Kadmon, la pierna que da el primer paso. Los artistas, músicos y amantes viven en Netzaj — el reino del impulso creativo y la pasión sin límites.",
+   sib:"≡ 148 · Eternidad y victoria · Sede del deseo y la emoción pura · Muslo derecho de Adam Kadmon",
+   r:150,g2:255,b:150,hex:"#96ff96"},
+  {es:"Hod — Esplendor",he:"הוֹד",
+   ld:[{c:"ה",n:"He · 5",d:"El soplo — el esplendor que respira y se manifiesta"},{c:"ו",n:"Vav · 6",d:"El clavo — Hod ancla el esplendor en el mundo"},{c:"ד",n:"Dalet · 4",d:"La puerta — el esplendor abre la percepción a lo sagrado"}],
+   g:15,
+   epic:"Hod es el esplendor, el reconocimiento, la gratitud. Si Netzaj es la emoción que impulsa, Hod es la conciencia que contempla y da gracias. Hod corresponde al pensamiento analítico, al lenguaje preciso, a la capacidad de ver el patrón dentro del caos. Es la sefirah de los profetas — aquellos que recibieron mensajes y encontraron las palabras exactas para transmitirlos.",
+   sib:"≡ 15 = Yah (nombre divino) · El esplendor que reconoce y da gracias · Sefirah de los profetas",
+   r:180,g2:255,b:220,hex:"#b4ffdc"},
+  {es:"Maljut — Reino",he:"מַלְכוּת",
+   ld:[{c:"מ",n:"Mem · 40",d:"El océano — Maljut recibe todas las aguas del Árbol"},{c:"ל",n:"Lamed · 30",d:"El toro que aprende — el Reino aprende de todos los mundos superiores"},{c:"כ",n:"Kaf · 20",d:"La palma — el Reino sostiene y manifiesta todo lo recibido"},{c:"ו",n:"Vav · 6",d:"El clavo — el Reino está conectado a todos los niveles"},{c:"ת",n:"Tav · 400",d:"El sello final — Maljut es el último peldaño, la firma del mundo"}],
+   g:496,
+   epic:"Maljut es la décima y última sefirah — el Reino, la tierra, el mundo físico. Es el punto de llegada de toda energía divina: lo que empezó como voluntad pura en Keter llega, transformado y densificado, hasta Maljut — el mundo que puedes tocar. Maljut es también la Shejiná, la presencia divina en el mundo material. Cada piedra, cada átomo, cada momento es Maljut. Dios habita aquí, en lo concreto.",
+   sib:"≡ 496 · Décima sefirah · El mundo físico como manifestación de lo divino · La Shejiná habita en Maljut",
+   r:200,g2:160,b:255,hex:"#c8a0ff"}  ,{es:"YHVH",he:"יהוה",
+   ld:[{c:"י",n:"Yod · 10",d:"El punto primordial — el primer instante de la creación, la chispa que lo contiene todo"},{c:"ה",n:"He · 5",d:"La ventana — la primera expansión, el aliento que despliega el mundo"},{c:"ו",n:"Vav · 6",d:"El clavo — el eje que une el cielo y la tierra, pasado y futuro"},{c:"ה",n:"He · 5",d:"Segunda ventana — la manifestación final, el mundo como reflejo del origen"}],
+   g:26,
+   epic:"יהוה — el nombre impronunciable de Dios. Su valor es 26 = 2 × 13 = Amor × Amor. Los cuatro caracteres corresponden a las cuatro letras del alfabeto hebreo que forman el nombre divino: Yod-He-Vav-He. En la Kabbalah, cada letra corresponde a una sefirah y a un mundo: Yod a Jojmah (Atzilut), He a Biná (Beriá), Vav a las seis sefirot centrales (Yetzirá), He final a Maljut (Asiá). El nombre entero es el mapa completo de la realidad. Nunca se pronuncia — se medita.",
+   sib:"≡ 26 = 2 × 13 (Amor × Unidad) · יהוה contiene los cuatro mundos · El nombre que sostiene la existencia",
+   r:255,g2:255,b:220,hex:"#ffffc8"}
+];
+
+// ══════════════════════════════════════════════
+// THREE.JS SETUP
+// ══════════════════════════════════════════════
+const canvas3 = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({canvas:canvas3, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x000008, 1);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x000008, 0.028);
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 500);
+camera.position.z = 5;
+
+// ── DEEP STAR FIELD ──
+const starGeo = new THREE.BufferGeometry();
+const SC = 10000;
+const sPos = new Float32Array(SC*3);
+const sSz  = new Float32Array(SC);
+const sPhase = new Float32Array(SC);
+for(let i=0;i<SC;i++){
+  sPos[i*3]   = (Math.random()-0.5)*300;
+  sPos[i*3+1] = (Math.random()-0.5)*300;
+  sPos[i*3+2] = (Math.random()-0.5)*300;
+  sSz[i]      = Math.random()*2.8+0.2;
+  sPhase[i]   = Math.random()*Math.PI*2;
+}
+starGeo.setAttribute('position',new THREE.BufferAttribute(sPos,3));
+starGeo.setAttribute('size',new THREE.BufferAttribute(sSz,1));
+starGeo.setAttribute('phase',new THREE.BufferAttribute(sPhase,1));
+const starMat = new THREE.ShaderMaterial({
+  uniforms:{uTime:{value:0}},
+  vertexShader:`
+    attribute float size; attribute float phase;
+    uniform float uTime;
+    varying float vA;
+    void main(){
+      vA = 0.25 + 0.75*abs(sin(phase + uTime*(0.3+fract(phase)*0.4)));
+      vec4 mv = modelViewMatrix*vec4(position,1.0);
+      gl_PointSize = size*(280.0/-mv.z);
+      gl_Position = projectionMatrix*mv;
+    }
+  `,
+  fragmentShader:`
+    varying float vA;
+    void main(){
+      float d = length(gl_PointCoord-vec2(0.5));
+      if(d>0.5) discard;
+      float a = (1.0-d*2.0)*(1.0-d*2.0)*vA;
+      gl_FragColor = vec4(1.0,1.0,1.0,a);
+    }
+  `,
+  transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,
+});
+scene.add(new THREE.Points(starGeo,starMat));
+
+// ── COLORED STAR CLUSTERS (adds depth/drama) ──
+function colorCluster(col, n, spread){
+  const g=new THREE.BufferGeometry();
+  const p=new Float32Array(n*3);
+  const s=new Float32Array(n);
+  const ph=new Float32Array(n);
+  for(let i=0;i<n;i++){
+    const r=spread*(0.3+Math.random()*0.7);
+    const th=Math.random()*Math.PI*2, ph2=Math.random()*Math.PI;
+    p[i*3]=r*Math.sin(ph2)*Math.cos(th);
+    p[i*3+1]=r*Math.sin(ph2)*Math.sin(th)*0.5;
+    p[i*3+2]=r*Math.cos(ph2)-15;
+    s[i]=Math.random()*1.8+0.4;
+    ph[i]=Math.random()*Math.PI*2;
+  }
+  g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  g.setAttribute('size',new THREE.BufferAttribute(s,1));
+  g.setAttribute('phase',new THREE.BufferAttribute(ph,1));
+  const m=new THREE.ShaderMaterial({
+    uniforms:{uTime:{value:0},uCol:{value:new THREE.Color(col)}},
+    vertexShader:`
+      attribute float size; attribute float phase;
+      uniform float uTime; varying float vA;
+      void main(){
+        vA=0.15+0.45*abs(sin(phase+uTime*0.25));
+        vec4 mv=modelViewMatrix*vec4(position,1.0);
+        gl_PointSize=size*(200.0/-mv.z);
+        gl_Position=projectionMatrix*mv;
+      }
+    `,
+    fragmentShader:`
+      uniform vec3 uCol; varying float vA;
+      void main(){
+        float d=length(gl_PointCoord-vec2(0.5));
+        if(d>0.5) discard;
+        float a=(1.0-d*2.0)*vA;
+        gl_FragColor=vec4(uCol,a);
+      }
+    `,
+    transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,
+  });
+  return {pts:new THREE.Points(g,m), mat:m};
+}
+const clusters=[];
+[['#3311aa',500,40],['#110044',400,50],['#220033',300,35],['#001122',400,45]].forEach(([c,n,s])=>{
+  const {pts,mat}=colorCluster(c,n,s);
+  scene.add(pts);
+  clusters.push({pts,mat});
+});
+
+// ── WORD PARTICLE SPHERE ──
+let wPts=null, wMat=null, wBirth=0;
+function makeWordPts(hex){
+  if(wPts) scene.remove(wPts);
+  const N=3000;
+  const g=new THREE.BufferGeometry();
+  const pos=new Float32Array(N*3);
+  const vel=new Float32Array(N*3);
+  const sz=new Float32Array(N);
+  const ph=new Float32Array(N);
+  for(let i=0;i<N;i++){
+    const r=0.5+Math.random()*3;
+    const th=Math.random()*Math.PI*2,phi=Math.random()*Math.PI;
+    pos[i*3]=r*Math.sin(phi)*Math.cos(th);
+    pos[i*3+1]=r*Math.sin(phi)*Math.sin(th)*0.55;
+    pos[i*3+2]=r*Math.cos(phi);
+    vel[i*3]=(Math.random()-0.5)*0.003;
+    vel[i*3+1]=(Math.random()-0.5)*0.003;
+    vel[i*3+2]=(Math.random()-0.5)*0.003;
+    sz[i]=Math.random()*3+0.8;
+    ph[i]=Math.random()*Math.PI*2;
+  }
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.setAttribute('vel',new THREE.BufferAttribute(vel,3));
+  g.setAttribute('size',new THREE.BufferAttribute(sz,1));
+  g.setAttribute('phase',new THREE.BufferAttribute(ph,1));
+  wMat=new THREE.ShaderMaterial({
+    uniforms:{uTime:{value:0},uBirth:{value:0},uCol:{value:new THREE.Color(hex)}},
+    vertexShader:`
+      attribute float size; attribute float phase; attribute vec3 vel;
+      uniform float uTime,uBirth; varying float vA;
+      void main(){
+        float age=uTime-uBirth;
+        float expand=min(age*0.6,1.0);
+        vec3 p=position+vel*age*55.0;
+        p*=(0.2+expand*0.8);
+        vA=(0.3+0.5*abs(sin(phase+uTime*0.9)))*expand;
+        vec4 mv=modelViewMatrix*vec4(p,1.0);
+        gl_PointSize=size*(200.0/-mv.z)*expand;
+        gl_Position=projectionMatrix*mv;
+      }
+    `,
+    fragmentShader:`
+      uniform vec3 uCol; varying float vA;
+      void main(){
+        vec2 uv=gl_PointCoord-vec2(0.5);
+        float d=length(uv);
+        if(d>0.5) discard;
+        float core=1.0-smoothstep(0.0,0.25,d);
+        float glow=1.0-smoothstep(0.0,0.5,d);
+        vec3 bright=mix(uCol,vec3(1.0),core*0.6);
+        gl_FragColor=vec4(bright,(core*0.95+glow*0.25)*vA);
+      }
+    `,
+    transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,
+  });
+  wPts=new THREE.Points(g,wMat);
+  scene.add(wPts);
+}
+
+// ── VOLUMETRIC RINGS ──
+function makeRing(radius, tube, speed, tiltX, tiltY, segments=300){
+  const g=new THREE.TorusGeometry(radius,tube,12,segments);
+  const m=new THREE.ShaderMaterial({
+    uniforms:{uTime:{value:0},uCol:{value:new THREE.Color('#ffffff')},uSpeed:{value:speed}},
+    vertexShader:`
+      varying vec2 vUv;
+      void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}
+    `,
+    fragmentShader:`
+      uniform float uTime,uSpeed; uniform vec3 uCol; varying vec2 vUv;
+      void main(){
+        float s=sin(vUv.x*6.2832*6.0+uTime*uSpeed)*0.5+0.5;
+        float pulse=sin(vUv.x*6.2832*2.0-uTime*uSpeed*0.5)*0.5+0.5;
+        float a=(s*0.6+pulse*0.15)*0.55;
+        gl_FragColor=vec4(uCol,a);
+      }
+    `,
+    transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,
+  });
+  const mesh=new THREE.Mesh(g,m);
+  mesh.rotation.x=tiltX; mesh.rotation.y=tiltY;
+  scene.add(mesh);
+  return {mesh,mat:m};
+}
+const rings=[
+  makeRing(2.4, 0.007, 2.0, Math.PI/2, 0),
+  makeRing(2.9, 0.004, -1.5, Math.PI/2+0.4, 0.3),
+  makeRing(3.4, 0.003, 1.2, Math.PI/2-0.3, -0.5),
+  makeRing(1.9, 0.005, -2.5, 0.4, Math.PI/3),
+];
+
+// ── METEORS ──
+const meteors=[];
+function spawnMeteor(hex,fromCenter=false){
+  if(fromCenter){
+    // Burst from center outward
+    const ang=Math.random()*Math.PI*2;
+    const spd=3+Math.random()*5;
+    meteors.push({
+      x:0,y:0,z:0,
+      vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd*0.6,vz:(Math.random()-0.5)*2,
+      life:1,hex,len:0.8+Math.random()*1.2,age:0,
+    });
+  } else {
+    const side=Math.random()>0.5;
+    meteors.push({
+      x:side?-14:14,y:(Math.random()-0.5)*10,z:(Math.random()-0.5)*3,
+      vx:side?(0.12+Math.random()*0.18):-(0.12+Math.random()*0.18),
+      vy:(Math.random()-0.4)*0.06,vz:0,
+      life:1,hex,len:1.5+Math.random()*2.5,age:0,
+    });
+  }
+}
+const meteorLines=[];
+function updateMeteors(){
+  // Remove dead
+  for(let i=meteorLines.length-1;i>=0;i--){
+    if(meteorLines[i].life<=0){
+      scene.remove(meteorLines[i].line);
+      meteorLines.splice(i,1);
+    }
+  }
+  // Add new from data
+  meteors.forEach(m=>{
+    const g=new THREE.BufferGeometry();
+    const pts=[
+      new THREE.Vector3(m.x-m.vx*(m.len/0.15),m.y-m.vy*(m.len/0.15),m.z),
+      new THREE.Vector3(m.x,m.y,m.z)
+    ];
+    g.setFromPoints(pts);
+    const mat=new THREE.LineBasicMaterial({
+      color:new THREE.Color(m.hex),transparent:true,opacity:m.life*0.95,
+      blending:THREE.AdditiveBlending,depthWrite:false,
+    });
+    const line=new THREE.Line(g,mat);
+    scene.add(line);
+    meteorLines.push({line,mat,life:m.life});
+  });
+  meteors.length=0;
+}
+
+// ── SPARKLE DUST ──
+const dustGeo=new THREE.BufferGeometry();
+const DUSTN=800;
+const dustPos=new Float32Array(DUSTN*3);
+const dustVel=new Float32Array(DUSTN*3);
+const dustLife=new Float32Array(DUSTN);
+const dustPhase=new Float32Array(DUSTN);
+for(let i=0;i<DUSTN;i++){
+  dustPos[i*3]=0;dustPos[i*3+1]=0;dustPos[i*3+2]=0;
+  const a=Math.random()*Math.PI*2,spd=0.005+Math.random()*0.02;
+  dustVel[i*3]=Math.cos(a)*spd*(Math.random()>0.5?1:-1);
+  dustVel[i*3+1]=(0.005+Math.random()*0.015)*(Math.random()>0.3?1:-1);
+  dustVel[i*3+2]=(Math.random()-0.5)*0.008;
+  dustLife[i]=Math.random();
+  dustPhase[i]=Math.random()*Math.PI*2;
+}
+dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));
+dustGeo.setAttribute('size',new THREE.BufferAttribute(new Float32Array(DUSTN).fill(2.5),1));
+const dustMat=new THREE.ShaderMaterial({
+  uniforms:{uTime:{value:0},uCol:{value:new THREE.Color('#c9a0ff')}},
+  vertexShader:`
+    attribute float size; uniform float uTime;
+    varying float vA;
+    void main(){
+      vA=0.4+0.6*abs(sin(position.x*8.0+uTime));
+      vec4 mv=modelViewMatrix*vec4(position,1.0);
+      gl_PointSize=size*(120.0/-mv.z);
+      gl_Position=projectionMatrix*mv;
+    }
+  `,
+  fragmentShader:`
+    uniform vec3 uCol; varying float vA;
+    void main(){
+      float d=length(gl_PointCoord-vec2(0.5));
+      if(d>0.5)discard;
+      gl_FragColor=vec4(uCol,(1.0-d*2.0)*vA*0.7);
+    }
+  `,
+  transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,
+});
+const dustPts=new THREE.Points(dustGeo,dustMat);
+scene.add(dustPts);
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let cur=0, clock=new THREE.Clock(), t=0;
+let camTX=0,camTY=0;
+
+document.addEventListener('mousemove',e=>{
+  camTX=(e.clientX/window.innerWidth-0.5)*1.5;
+  camTY=-(e.clientY/window.innerHeight-0.5)*0.8;
+});
+
+function setColor(w){
+  const c=new THREE.Color(w.hex);
+  rings.forEach((rg,i)=>{
+    rg.mat.uniforms.uCol.value=c.clone().multiplyScalar(0.8-i*0.12);
+  });
+  dustMat.uniforms.uCol.value=c.clone();
+  clusters.forEach((cl,i)=>{
+    cl.mat.uniforms.uCol.value=c.clone().multiplyScalar(0.08+i*0.03);
+  });
+  makeWordPts(w.hex);
+  wBirth=t;
+  if(wMat) wMat.uniforms.uBirth.value=t;
+}
+
+function selectWord(i){
+  document.querySelectorAll('.wb').forEach(b=>{ if(b.dataset.idx!==undefined) b.classList.toggle('active',parseInt(b.dataset.idx)===i); });
+  cur=i;
+  const w=WORDS[i];
+
+  // Animate center text out then in
+  ['co-he','co-word','co-gem'].forEach(id=>{
+    document.getElementById(id).classList.remove('visible');
+  });
+  document.getElementById('panel-epic').classList.remove('in');
+  document.getElementById('panel-siblings').classList.remove('in');
+  document.querySelectorAll('.pl').forEach(p=>p.classList.remove('in'));
+  document.getElementById('panel-bg').scrollTop=0;
+
+  setTimeout(()=>{
+    // Set CSS word color var for theming
+    document.body.style.setProperty('--wc', w.hex);
+
+    const he=document.getElementById('co-he');
+    he.textContent=w.he;
+    he.style.color = w.hex; // saturated color always contrasts against particles
+
+    document.getElementById('co-word').textContent=w.es.toUpperCase();
+
+    document.getElementById('co-gem-num').textContent=w.g;
+
+    setTimeout(()=>{
+      he.classList.add('visible');
+      document.getElementById('co-word').classList.add('visible');
+      document.getElementById('co-gem').classList.add('visible');
+    },30);
+
+    // Letters — new pill layout
+    const pl=document.getElementById('panel-letters');
+    pl.innerHTML='';
+    w.ld.forEach((l,li)=>{
+      const d=document.createElement('div');
+      d.className='pl';
+      d.style.borderColor=`rgba(${w.r},${w.g2},${w.b},0.18)`;
+      d.innerHTML=`
+        <div class="pl-he-block" style="background:rgba(${w.r},${w.g2},${w.b},0.07)">
+          <div class="pl-he" style="color:${w.hex}">${l.c}</div>
+        </div>
+        <div class="pl-text">
+          <div class="pl-name">${l.n}</div>
+          <div class="pl-desc">${l.d}</div>
+        </div>`;
+      pl.appendChild(d);
+      setTimeout(()=>d.classList.add('in'),li*80+80);
+    });
+
+    document.getElementById('panel-epic').textContent=w.epic;
+    document.getElementById('panel-siblings').textContent=w.sib;
+    setTimeout(()=>document.getElementById('panel-epic').classList.add('in'),200);
+    setTimeout(()=>document.getElementById('panel-siblings').classList.add('in'),350);
+  },220);
+
+  setColor(w);
+
+  // Meteor burst
+  for(let k=0;k<12;k++){
+    setTimeout(()=>{
+      spawnMeteor(w.hex,k<5);
+      spawnMeteor(w.hex,false);
+    },k*120+Math.random()*150);
+  }
+}
+
+function nextWord(){selectWord((cur+1)%WORDS.length);}
+function prevWord(){selectWord((cur-1+WORDS.length)%WORDS.length);}
+
+// Build HUD — row1: conceptos, row2: sefirot en orden
+const row1=document.getElementById('hud-top');
+const row2=document.getElementById('hud-bottom');
+
+// Sefirot indices in Etz Chaim order (top to bottom)
+const SEFIRA_IDX = [16,17,18,15,19,20,21,22,23,13,24];
+const sefirotSet = new Set(SEFIRA_IDX);
+
+function makeBtn(i){
+  const w=WORDS[i];
+  const b=document.createElement('button');
+  b.className='wb'; b.dataset.idx=i;
+  const esName=w.es.split('—')[0].split('—')[0].trim();
+  b.innerHTML=`<span class="wb-he">${w.he}</span><span class="wb-es">${esName}</span>`;
+  b.onclick=()=>selectWord(i);
+  return b;
+}
+
+// Row 1: conceptos (all except sefirot)
+WORDS.forEach((_,i)=>{ if(!sefirotSet.has(i)) row1.appendChild(makeBtn(i)); });
+
+// Row 2: sefirot in Etz Chaim order
+SEFIRA_IDX.forEach(i=>row2.appendChild(makeBtn(i)));
+
+// Now HUD is fully populated — measure and position
+positionOverlay();
+
+// ══════════════════════════════════════════════
+// ANIMATE
+// ══════════════════════════════════════════════
+// Position center-overlay dynamically based on HUD height
+function positionOverlay(){
+  const hudH = document.getElementById('hud').offsetHeight;
+  document.getElementById('center-overlay').style.top = hudH + 'px';
+}
+window.addEventListener('resize', positionOverlay);
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=clock.getDelta(); t+=dt;
+
+  // Smooth camera
+  camera.position.x+=(camTX-camera.position.x)*0.04;
+  camera.position.y+=(camTY-camera.position.y)*0.04;
+  camera.lookAt(0,0,0);
+
+  // Stars
+  starMat.uniforms.uTime.value=t;
+
+  // Clusters
+  clusters.forEach((cl,i)=>{
+    cl.pts.rotation.y+=0.0001*(i%2===0?1:-1);
+    cl.mat.uniforms.uTime.value=t;
+  });
+
+  // Word pts
+  if(wMat){ wMat.uniforms.uTime.value=t; wMat.uniforms.uBirth.value=wBirth; }
+  if(wPts){ wPts.rotation.y=t*0.04; wPts.rotation.x=Math.sin(t*0.12)*0.15; }
+
+  // Rings
+  rings.forEach((rg,i)=>{
+    rg.mesh.rotation.z=t*(0.08+i*0.03)*(i%2===0?1:-1);
+    rg.mesh.rotation.x=Math.PI/2+Math.sin(t*(0.1+i*0.05))*0.15;
+    rg.mat.uniforms.uTime.value=t;
+  });
+
+  // Dust
+  const dp=dustGeo.attributes.position;
+  for(let i=0;i<DUSTN;i++){
+    dustLife[i]-=0.003+Math.random()*0.002;
+    if(dustLife[i]<=0){
+      dustLife[i]=0.8+Math.random()*0.4;
+      const a=Math.random()*Math.PI*2, r=0.2+Math.random()*1.2;
+      dp.setXYZ(i,Math.cos(a)*r,Math.sin(a)*r*0.5,(Math.random()-0.5)*0.5);
+      const spd=0.005+Math.random()*0.02;
+      dustVel[i*3]=Math.cos(a+Math.PI/2)*spd;
+      dustVel[i*3+1]=(0.003+Math.random()*0.012)*(Math.random()>0.3?1:-1);
+      dustVel[i*3+2]=(Math.random()-0.5)*0.006;
+    } else {
+      dp.setXYZ(i,
+        dp.getX(i)+dustVel[i*3],
+        dp.getY(i)+dustVel[i*3+1],
+        dp.getZ(i)+dustVel[i*3+2]
+      );
+    }
+  }
+  dp.needsUpdate=true;
+  dustMat.uniforms.uTime.value=t;
+
+  // Meteors
+  for(let i=meteorLines.length-1;i>=0;i--){
+    meteorLines[i].life-=0.011;
+    meteorLines[i].mat.opacity=Math.max(0,meteorLines[i].life*0.95);
+    const pa=meteorLines[i].line.geometry.attributes.position;
+    const x1=pa.getX(1),y1=pa.getY(1),z1=pa.getZ(1);
+    const vx=(x1>0?-0.13:0.13),vy=(Math.random()-0.5)*0.01;
+    pa.setXYZ(0,x1+vx*meteorLines[i].len*0.4,y1,z1);
+    pa.setXYZ(1,x1+vx,y1+vy,z1);
+    pa.needsUpdate=true;
+    if(meteorLines[i].life<=0){scene.remove(meteorLines[i].line);meteorLines.splice(i,1);}
+  }
+  updateMeteors();
+  if(Math.random()<0.018) spawnMeteor(WORDS[cur].hex);
+
+  renderer.render(scene,camera);
+}
+
+window.addEventListener('resize',()=>{
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth,window.innerHeight);
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') nextWord();
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') prevWord();
+});
+
+selectWord(0); animate();
+</script>
+</body>
+</html>
