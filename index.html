@@ -20,88 +20,81 @@ html,body{width:100%;height:100%;background:#050408;overflow:hidden;touch-action
 
 #three-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;}
 
-/* ── HUD ── */
-#hud {
+/* ── NAV: logo + 3 tabs ── */
+#nav-bar {
   position:fixed; top:0; left:0; right:0;
-  z-index:50;
-  background:rgba(6,4,12,0.6);
-  backdrop-filter:blur(18px);
-  border-bottom:1px solid rgba(255,255,255,0.07);
+  z-index:50; height:52px;
+  display:flex; align-items:center;
+  padding:0 16px; gap:0;
+  background:rgba(6,4,12,0.75);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,0.08);
 }
-/* Each row is a proper flex line, centered */
-#hud-top {
-  display:flex; flex-direction:row; flex-wrap:wrap;
-  align-items:center; justify-content:center;
-  padding:3px 12px 2px;
-  border-bottom:1px solid rgba(255,255,255,0.04);
-  gap:0;
-}
-#hud-bottom {
-  display:flex; flex-direction:row; flex-wrap:wrap;
-  align-items:center; justify-content:center;
-  padding:2px 12px 3px;
-  gap:0;
-}
-#hud-letters {
-  display:flex; flex-direction:row; flex-wrap:wrap;
-  align-items:center; justify-content:center;
-  padding:2px 12px 4px;
-  gap:0;
-  border-top:1px solid rgba(255,255,255,0.04);
-}
-#hud-logo {
-  font-family:var(--mono); font-size:13px; letter-spacing:0.16em;
-  color:var(--accent); padding:6px 14px 6px 4px;
+#nav-logo {
+  font-family:var(--mono); font-size:14px; letter-spacing:0.16em;
+  color:var(--accent); padding-right:20px;
   border-right:1px solid rgba(255,255,255,0.1);
-  margin-right:6px; flex-shrink:0; line-height:1;
-  white-space:nowrap;
+  margin-right:8px; flex-shrink:0; line-height:1;
 }
-
-
-.wb {
-  flex-shrink:0;
-  background:none; border:none;
-  cursor:pointer; border-radius:8px;
-  padding:6px 12px 7px;
-  transition:all 0.2s;
-  white-space:nowrap;
-  display:flex; flex-direction:column; align-items:center; gap:3px;
-}
-.wb-he {
-  font-family:var(--serif); font-size:22px; line-height:1;
-  color:rgba(255,255,255,0.6);
-  transition:color 0.2s;
-  direction:rtl;
-}
-.wb-es {
-  font-family:var(--body); font-size:13px; font-weight:400;
-  letter-spacing:0.01em;
-  color:rgba(255,255,255,0.5);
-  transition:color 0.2s;
-}
-.wb:hover .wb-he { color:#fff; }
-.wb:hover .wb-es { color:rgba(255,255,255,0.8); }
-.wb:hover { background:rgba(255,255,255,0.07); }
-.wb.active { background:rgba(255,255,255,0.13); }
-.wb.active .wb-he { color:#fff; filter:drop-shadow(0 0 8px var(--wc,#c8a96e)); }
-.wb.active .wb-es { color:#fff; font-weight:500; }
-
-/* Letter buttons — glyph + name below */
-.wb-letter {
-  padding:5px 10px 6px;
-}
-.wb-letter .wb-he {
-  font-size:28px;
-}
-.wb-letter .wb-es {
-  display:block;
-  font-size:11px;
+.tab-btn {
+  background:none; border:none; cursor:pointer;
+  font-family:var(--body); font-size:14px; font-weight:400;
   color:rgba(255,255,255,0.45);
+  padding:0 18px; height:52px;
+  display:flex; align-items:center;
+  transition:all 0.2s; position:relative;
+  letter-spacing:0.04em;
+  white-space:nowrap;
 }
+.tab-btn::after {
+  content:''; position:absolute; bottom:0; left:18px; right:18px;
+  height:2px; background:var(--wc,#c8a96e);
+  transform:scaleX(0); transform-origin:left;
+  transition:transform 0.25s cubic-bezier(0.16,1,0.3,1);
+}
+.tab-btn:hover { color:rgba(255,255,255,0.8); }
+.tab-btn.active { color:#fff; }
+.tab-btn.active::after { transform:scaleX(1); }
+
+/* ── WORD GRID ── */
+#word-grid {
+  position:fixed; top:52px; left:0; right:0; bottom:0;
+  z-index:45; overflow-y:auto;
+  background:rgba(6,4,12,0.5);
+  backdrop-filter:blur(16px);
+  padding:16px 16px 24px;
+  display:none;
+  grid-template-columns: repeat(auto-fill, minmax(140px,1fr));
+  gap:8px;
+  align-content:start;
+}
+#word-grid.visible { display:grid; }
+
+.wg-btn {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:10px; cursor:pointer;
+  padding:12px 10px 10px;
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  transition:all 0.2s;
+}
+.wg-btn:hover { background:rgba(255,255,255,0.09); border-color:rgba(255,255,255,0.2); }
+.wg-btn.active { border-color:var(--wc,#c8a96e); background:rgba(255,255,255,0.08); }
+.wg-he {
+  font-family:var(--serif); font-size:28px; line-height:1;
+  direction:rtl; color:rgba(255,255,255,0.75);
+  transition:all 0.2s;
+}
+.wg-btn.active .wg-he { color:#fff; filter:drop-shadow(0 0 10px var(--wc,#c8a96e)); }
+.wg-es {
+  font-family:var(--body); font-size:12px; font-weight:400;
+  color:rgba(255,255,255,0.45); text-align:center; line-height:1.3;
+}
+.wg-btn.active .wg-es { color:rgba(255,255,255,0.8); }
 
 /* ── CENTER STAGE ── */
 #center-overlay {
-  position:fixed; top:0; left:0; right:0;
+  position:fixed; top:52px; left:0; right:0;
   bottom:47vh; z-index:40; pointer-events:none;
   display:flex; flex-direction:column;
   align-items:center; justify-content:center;
@@ -291,52 +284,20 @@ html,body{width:100%;height:100%;background:#050408;overflow:hidden;touch-action
 }
 
 /* ── RESPONSIVE ── */
-@media (max-width: 768px) {
-  /* HUD: cada fila scrollea horizontal en móvil */
-  #hud-top, #hud-bottom, #hud-letters {
-    flex-wrap:nowrap;
-    overflow-x:auto;
-    justify-content:flex-start;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-  }
-  #hud-top::-webkit-scrollbar,
-  #hud-bottom::-webkit-scrollbar,
-  #hud-letters::-webkit-scrollbar { display:none; }
-  /* Botones más pequeños */
-  .wb { padding:4px 9px 5px; }
-  .wb-he { font-size:18px; }
-  .wb-es { font-size:10px; }
-  .wb-letter .wb-he { font-size:20px; }
-  .wb-letter .wb-es { font-size:9px; }
-  #hud-logo { font-size:11px; padding:5px 10px; margin-right:4px; }
-  /* Letra central más pequeña */
-  #co-he { font-size:clamp(48px,14vw,80px) !important; }
-  #co-word { font-size:clamp(10px,3vw,14px) !important; }
-  #co-gem-num { font-size:clamp(20px,6vw,36px) !important; }
-  #center-inner { padding:10px 16px 12px; border-radius:14px; }
-  /* Panel inferior ocupa más espacio */
-  #panel { height:50vh; }
+@media (max-width: 600px) {
+  #co-he { font-size:clamp(52px,16vw,90px) !important; }
+  #co-gem-num { font-size:clamp(24px,7vw,40px) !important; }
+  #center-inner { padding:10px 16px 12px; }
+  #panel { height:52vh; }
   #panel-bg { padding:12px 12px 20px; }
-  /* Tarjetas de letras más compactas */
-  .pl { min-width:100%; max-width:100%; border-radius:8px; }
-  #panel-letters { flex-direction:column; gap:6px; }
-  .pl-he { font-size:20px; }
-  .pl-name { font-size:11px; }
-  .pl-desc { font-size:12px; }
-  /* Texto épico */
-  #panel-epic { font-size:13px !important; line-height:1.7; text-align:left; }
-  #panel-siblings { font-size:11px !important; text-align:left; }
-  /* Flechas nav */
+  .pl { min-width:100%; max-width:100%; }
+  #panel-letters { flex-direction:column; }
+  #panel-epic { font-size:13px !important; }
+  #panel-siblings { font-size:11px !important; }
+  .wg-he { font-size:24px; }
+  .wg-es { font-size:11px; }
+  .wg-btn { padding:10px 8px 8px; }
   #nav { right:4px; }
-  #nav .nav-btn { width:24px; height:24px; font-size:10px; }
-}
-@media (max-width: 480px) {
-  .wb { padding:3px 7px 4px; }
-  .wb-he { font-size:15px; }
-  .wb-es { font-size:9px; }
-  #co-he { font-size:clamp(40px,12vw,64px) !important; }
-  #center-inner { padding:8px 12px 10px; }
 }
 
 /* ── WORD COLOR THEMING via CSS var ── */
@@ -347,7 +308,13 @@ body { --wc: var(--accent); }
 </head>
 <body>
 <canvas id="three-canvas"></canvas>
-<div id="hud"><div id="hud-top"><span id="hud-logo">KBL//</span></div><div id="hud-bottom"></div><div id="hud-letters"></div></div>
+<nav id="nav-bar">
+  <span id="nav-logo">KBL//</span>
+  <button class="tab-btn active" onclick="showTab('words')">Palabras</button>
+  <button class="tab-btn" onclick="showTab('sefirot')">Sefirot</button>
+  <button class="tab-btn" onclick="showTab('letras')">Letras</button>
+</nav>
+<div id="word-grid"></div>
 <div id="center-overlay">
   <div id="center-inner">
     <div id="co-he"></div>
@@ -966,7 +933,7 @@ function setColor(w){
 }
 
 function selectWord(i){
-  document.querySelectorAll('.wb').forEach(b=>{ if(b.dataset.idx!==undefined) b.classList.toggle('active',parseInt(b.dataset.idx)===i); });
+  updateGridActive();
   cur=i;
   const w=WORDS[i];
 
@@ -1046,46 +1013,53 @@ function selectWord(i){
 function nextWord(){selectWord((cur+1)%WORDS.length);}
 function prevWord(){selectWord((cur-1+WORDS.length)%WORDS.length);}
 
-// Build HUD — row1: conceptos, row2: sefirot en orden
-const row1=document.getElementById('hud-top');
-const row2=document.getElementById('hud-bottom');
-
-// Sefirot indices in Etz Chaim order per user:
-// Ein Sof(14), Keter(16), Jojmah(17), Biná(18), Jesed(19),
-// Guevurá(20), Tiferet(21), Netzaj(22), Hod(23), Yesod(13), Maljut(24)
-// Da'at(15) stays in row1 as a concept
+// ── TAB SYSTEM ──
 const SEFIRA_IDX = [14,16,17,18,19,20,21,22,23,13,24];
 const sefirotSet = new Set(SEFIRA_IDX);
+const letterStart = 26;
 
-function makeBtn(i, isLetter){
-  const w=WORDS[i];
-  const b=document.createElement('button');
-  b.className= isLetter ? 'wb wb-letter' : 'wb';
-  b.dataset.idx=i;
-  // Letter entries: "א — Aleph" → show "Aleph" (after the dash)
-  // Word entries:   "Kabbalah" or "Ahavah — Amor" → show first part
+function makeGridBtn(i){
+  const w = WORDS[i];
+  const b = document.createElement('button');
+  b.className = 'wg-btn';
+  b.dataset.idx = i;
   const parts = w.es.split('—');
-  const esName = isLetter && parts.length > 1
-    ? parts[1].trim()
-    : parts[0].trim();
-  b.innerHTML=`<span class="wb-he">${w.he}</span><span class="wb-es">${esName}</span>`;
-  b.onclick=()=>selectWord(i);
+  const isLetter = i >= letterStart;
+  const esName = isLetter && parts.length > 1 ? parts[1].trim() : parts[0].trim();
+  b.innerHTML = `<span class="wg-he" style="color:${w.hex}">${w.he}</span><span class="wg-es">${esName}</span>`;
+  b.onclick = () => { selectWord(i); hideGrid(); };
   return b;
 }
 
-// Row 1: conceptos (all except sefirot)
-WORDS.forEach((_,i)=>{ if(!sefirotSet.has(i) && i<26) row1.appendChild(makeBtn(i)); });
-
-// Row 2: sefirot in Etz Chaim order
-SEFIRA_IDX.forEach(i=>row2.appendChild(makeBtn(i)));
-
-// Row 3: 22 Hebrew letters in order
-const row3=document.getElementById('hud-letters');
-// Letters are indices 26-47
-for(let i=26; i<WORDS.length; i++){
-  row3.appendChild(makeBtn(i, true));
+let currentTab = 'words';
+function showTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active', ['words','sefirot','letras'][i]===tab);
+  });
+  const grid = document.getElementById('word-grid');
+  grid.innerHTML = '';
+  let indices = [];
+  if(tab==='words')   indices = [...Array(letterStart).keys()].filter(i=>!sefirotSet.has(i));
+  if(tab==='sefirot') indices = SEFIRA_IDX;
+  if(tab==='letras')  indices = [...Array(22).keys()].map(i=>i+letterStart);
+  indices.forEach(i=>grid.appendChild(makeGridBtn(i)));
+  grid.classList.add('visible');
+  updateGridActive();
 }
-// Now HUD is fully populated — measure and position
+
+function hideGrid(){
+  document.getElementById('word-grid').classList.remove('visible');
+}
+
+function updateGridActive(){
+  document.querySelectorAll('.wg-btn').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.dataset.idx)===cur);
+  });
+}
+
+showTab('words');
+hideGrid();
 positionOverlay();
 
 // ══════════════════════════════════════════════
@@ -1093,22 +1067,18 @@ positionOverlay();
 // ══════════════════════════════════════════════
 // Position center-overlay dynamically based on HUD height
 function positionOverlay(){
-  const hudH = document.getElementById('hud').offsetHeight;
-  if(hudH <= 0) return;
+  const navH = document.getElementById('nav-bar').offsetHeight;
+  const panelH = document.getElementById('panel').offsetHeight;
   const overlay = document.getElementById('center-overlay');
-  const panel = document.getElementById('panel');
-  // Panel height from CSS (50vh mobile, 47vh desktop)
-  const panelH = panel.offsetHeight;
-  const available = window.innerHeight - hudH - panelH;
-  overlay.style.top = hudH + 'px';
-  overlay.style.height = Math.max(available, 80) + 'px';
+  const avail = window.innerHeight - navH - panelH;
+  overlay.style.top = navH + 'px';
+  overlay.style.height = Math.max(avail, 60) + 'px';
   overlay.style.bottom = 'auto';
 }
 window.addEventListener('resize', positionOverlay);
 document.fonts.ready.then(positionOverlay);
-setTimeout(positionOverlay, 100);
-setTimeout(positionOverlay, 400);
-setTimeout(positionOverlay, 900);
+setTimeout(positionOverlay, 150);
+setTimeout(positionOverlay, 600);
 
 function animate(){
   requestAnimationFrame(animate);
