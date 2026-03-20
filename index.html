@@ -16,7 +16,7 @@
 }
 
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;background:#050408;overflow:hidden;}
+html,body{width:100%;height:100%;background:#050408;overflow:hidden;touch-action:pan-x;}
 
 #three-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;}
 
@@ -42,6 +42,13 @@ html,body{width:100%;height:100%;background:#050408;overflow:hidden;}
   padding:2px 12px 3px;
   gap:0;
 }
+#hud-letters {
+  display:flex; flex-direction:row; flex-wrap:wrap;
+  align-items:center; justify-content:center;
+  padding:2px 12px 4px;
+  gap:0;
+  border-top:1px solid rgba(255,255,255,0.04);
+}
 #hud-logo {
   font-family:var(--mono); font-size:13px; letter-spacing:0.16em;
   color:var(--accent); padding:6px 14px 6px 4px;
@@ -55,19 +62,19 @@ html,body{width:100%;height:100%;background:#050408;overflow:hidden;}
   flex-shrink:0;
   background:none; border:none;
   cursor:pointer; border-radius:8px;
-  padding:7px 16px 8px;
+  padding:6px 12px 7px;
   transition:all 0.2s;
   white-space:nowrap;
-  display:flex; flex-direction:column; align-items:center; gap:4px;
+  display:flex; flex-direction:column; align-items:center; gap:3px;
 }
 .wb-he {
-  font-family:var(--serif); font-size:24px; line-height:1;
+  font-family:var(--serif); font-size:22px; line-height:1;
   color:rgba(255,255,255,0.6);
   transition:color 0.2s;
   direction:rtl;
 }
 .wb-es {
-  font-family:var(--body); font-size:14px; font-weight:400;
+  font-family:var(--body); font-size:13px; font-weight:400;
   letter-spacing:0.01em;
   color:rgba(255,255,255,0.5);
   transition:color 0.2s;
@@ -78,6 +85,19 @@ html,body{width:100%;height:100%;background:#050408;overflow:hidden;}
 .wb.active { background:rgba(255,255,255,0.13); }
 .wb.active .wb-he { color:#fff; filter:drop-shadow(0 0 8px var(--wc,#c8a96e)); }
 .wb.active .wb-es { color:#fff; font-weight:500; }
+
+/* Letter buttons — glyph + name below */
+.wb-letter {
+  padding:5px 10px 6px;
+}
+.wb-letter .wb-he {
+  font-size:28px;
+}
+.wb-letter .wb-es {
+  display:block;
+  font-size:11px;
+  color:rgba(255,255,255,0.45);
+}
 
 /* ── CENTER STAGE ── */
 #center-overlay {
@@ -270,6 +290,55 @@ html,body{width:100%;height:100%;background:#050408;overflow:hidden;}
   background:rgba(var(--accent-rgb),0.08);
 }
 
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  /* HUD: cada fila scrollea horizontal en móvil */
+  #hud-top, #hud-bottom, #hud-letters {
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    justify-content:flex-start;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  #hud-top::-webkit-scrollbar,
+  #hud-bottom::-webkit-scrollbar,
+  #hud-letters::-webkit-scrollbar { display:none; }
+  /* Botones más pequeños */
+  .wb { padding:4px 9px 5px; }
+  .wb-he { font-size:18px; }
+  .wb-es { font-size:10px; }
+  .wb-letter .wb-he { font-size:20px; }
+  .wb-letter .wb-es { font-size:9px; }
+  #hud-logo { font-size:11px; padding:5px 10px; margin-right:4px; }
+  /* Letra central más pequeña */
+  #co-he { font-size:clamp(48px,14vw,80px) !important; }
+  #co-word { font-size:clamp(10px,3vw,14px) !important; }
+  #co-gem-num { font-size:clamp(20px,6vw,36px) !important; }
+  #center-inner { padding:10px 16px 12px; border-radius:14px; }
+  /* Panel inferior ocupa más espacio */
+  #panel { height:50vh; }
+  #panel-bg { padding:12px 12px 20px; }
+  /* Tarjetas de letras más compactas */
+  .pl { min-width:100%; max-width:100%; border-radius:8px; }
+  #panel-letters { flex-direction:column; gap:6px; }
+  .pl-he { font-size:20px; }
+  .pl-name { font-size:11px; }
+  .pl-desc { font-size:12px; }
+  /* Texto épico */
+  #panel-epic { font-size:13px !important; line-height:1.7; text-align:left; }
+  #panel-siblings { font-size:11px !important; text-align:left; }
+  /* Flechas nav */
+  #nav { right:4px; }
+  #nav .nav-btn { width:24px; height:24px; font-size:10px; }
+}
+@media (max-width: 480px) {
+  .wb { padding:3px 7px 4px; }
+  .wb-he { font-size:15px; }
+  .wb-es { font-size:9px; }
+  #co-he { font-size:clamp(40px,12vw,64px) !important; }
+  #center-inner { padding:8px 12px 10px; }
+}
+
 /* ── WORD COLOR THEMING via CSS var ── */
 body { --wc: var(--accent); }
 /* text-shadow handled in #co-he rule above */
@@ -278,7 +347,7 @@ body { --wc: var(--accent); }
 </head>
 <body>
 <canvas id="three-canvas"></canvas>
-<div id="hud"><div id="hud-top"><span id="hud-logo">KBL//</span></div><div id="hud-bottom"></div></div>
+<div id="hud"><div id="hud-top"><span id="hud-logo">KBL//</span></div><div id="hud-bottom"></div><div id="hud-letters"></div></div>
 <div id="center-overlay">
   <div id="center-inner">
     <div id="co-he"></div>
@@ -374,7 +443,7 @@ const WORDS=[
    ld:[{c:"י",n:"Yod · 10",d:"La chispa — de donde emana toda la energía descendente"},{c:"ס",n:"Samej · 60",d:"El círculo eterno — el apoyo sin principio ni fin"},{c:"ו",n:"Vav · 6",d:"El canal — por donde fluye la energía divina hacia el mundo"},{c:"ד",n:"Dalet · 4",d:"La puerta — umbral entre el mundo superior y el mundo de la acción"}],
    g:80,epic:"Yesod es la novena sefirah del Árbol de la Vida — el canal que transmite toda la energía divina al mundo de la manifestación. 80 es el valor de Peh, la boca — porque Yesod es donde la Palabra Divina se convierte en Mundo. Todo lo que existe fue primero pronunciado desde Yesod. La realidad entera es el eco de esa voz primordial.",
    sib:"≡ 80 · פֶּה (Boca — la Palabra que crea el mundo) · Canal entre lo Divino y lo Manifestado",
-   r:100,g2:200,b:255,hex:"#c0e8ff"},,
+   r:100,g2:200,b:255,hex:"#c0e8ff"},
   {es:"Ein Sof",he:"אֵין סוֹף",
    ld:[{c:"א",n:"Aleph · 1",d:"El Uno — la unidad que precede a todo número y toda forma"},{c:"י",n:"Yod · 10",d:"La chispa de existencia — incluso la nada contiene potencial"},{c:"נ",n:"Nun · 50",d:"El pez en el océano infinito — la inmanencia dentro del Infinito"},{c:"ס",n:"Samej · 60",d:"El círculo cerrado — lo que no tiene principio ni fin"},{c:"ו",n:"Vav · 6",d:"El clavo que une — el Infinito se conecta con lo finito"},{c:"ף",n:"Peh sofit · 800",d:"La boca final — el Infinito habla y crea mundos"}],
    g:207,
@@ -445,7 +514,139 @@ const WORDS=[
    g:26,
    epic:"יהוה — el nombre impronunciable de Dios. Su valor es 26 = 2 × 13 = Amor × Amor. Los cuatro caracteres corresponden a las cuatro letras del alfabeto hebreo que forman el nombre divino: Yod-He-Vav-He. En la Kabbalah, cada letra corresponde a una sefirah y a un mundo: Yod a Jojmah (Atzilut), He a Biná (Beriá), Vav a las seis sefirot centrales (Yetzirá), He final a Maljut (Asiá). El nombre entero es el mapa completo de la realidad. Nunca se pronuncia — se medita.",
    sib:"≡ 26 = 2 × 13 (Amor × Unidad) · יהוה contiene los cuatro mundos · El nombre que sostiene la existencia",
-   r:255,g2:255,b:220,hex:"#ffffc8"}
+   r:255,g2:255,b:220,hex:"#ffffc8"}  ,{es:"א — Aleph",he:"א",
+   ld:[{c:"א",n:"Aleph · 1",d:"El buey — el Uno antes de toda creación, el silencio primordial antes del primer sonido"}],
+   g:1,
+   epic:"El Aleph no tiene sonido propio — es la potencialidad de todos los sonidos. Vale 1, el número que precede a todos los números. El Zohar dice que Dios comenzó a crear el universo con Aleph pero eligió empezar la Torah con Bet — porque Aleph es tan sagrado que no puede ser el inicio de algo limitado. El Aleph contiene todos los mundos posibles en un solo punto de silencio.",
+   sib:"≡ 1 · El Uno antes del uno · Sin sonido — potencialidad pura · El universo comenzó con Aleph",
+   r:245,g2:240,b:232,hex:"#f5f0e8"}
+  ,{es:"ב — Bet",he:"ב",
+   ld:[{c:"ב",n:"Bet · 2",d:"La casa — el primer lugar donde Dios eligió habitar, el primer sonido de la Torah"}],
+   g:2,
+   epic:"La Torah comienza con Bet: Bereshit. Los sabios explican que Bet tiene tres lados cerrados y uno abierto hacia adelante — no miramos atrás, solo avanzamos. Bet = 2: la dualidad, el primer momento en que el Uno se convierte en dos para poder relacionarse consigo mismo. Toda casa tiene un dentro y un fuera. Toda creación tiene un creador y una criatura.",
+   sib:"≡ 2 · Primera letra de la Torah · Bereshit · La dualidad que permite la relación",
+   r:232,g2:213,b:176,hex:"#e8d5b0"}
+  ,{es:"ג — Guimel",he:"ג",
+   ld:[{c:"ג",n:"Guimel · 3",d:"El camello — la generosidad que corre hacia el necesitado sin esperar recompensa"}],
+   g:3,
+   epic:"Guimel representa al rico que corre hacia el Dalet (el pobre) para darle. La forma de la letra muestra una pierna en movimiento — la caridad activa, no pasiva. 3 es el primer número impar que no es el Uno — la síntesis entre el 1 y el 2, la tercera posición que trasciende la dualidad. El triángulo: la forma más estable de la naturaleza.",
+   sib:"≡ 3 · La generosidad en movimiento · El triángulo sagrado · Síntesis de 1 y 2",
+   r:200,g2:232,b:208,hex:"#c8e8d0"}
+  ,{es:"ד — Dalet",he:"ד",
+   ld:[{c:"ד",n:"Dalet · 4",d:"La puerta — el umbral entre mundos, y el pobre que recibe la generosidad del Guimel"}],
+   g:4,
+   epic:"Dalet significa puerta y también pobreza. La letra tiene la forma de una puerta entreabierta. El pobre es aquel cuya puerta siempre está abierta — no tiene nada que proteger. 4 representa los cuatro mundos (Atzilut, Beriá, Yetzirá, Asiá), los cuatro ríos del Edén, los cuatro puntos cardinales. La realidad se estructura siempre en cuatro dimensiones.",
+   sib:"≡ 4 · Los cuatro mundos · Las cuatro letras del Nombre · La puerta siempre abierta",
+   r:208,g2:232,b:255,hex:"#d0e8ff"}
+  ,{es:"ה — He",he:"ה",
+   ld:[{c:"ה",n:"He · 5",d:"La ventana — el soplo divino, la letra que Dios añadió a los nombres de Abraham y Sara"}],
+   g:5,
+   epic:"He es el aliento más suave — la aspiración. Dios tomó a Abram y añadió una He: Abraham. Tomó a Sarai y añadió una He: Sara. La misma letra del nombre divino יהוה. 5 representa los cinco libros de la Torah, los cinco sentidos, los cinco dedos de la mano. La He aparece dos veces en יהוה — al principio y al final, como el aliento que abre y cierra cada ciclo.",
+   sib:"≡ 5 · Los cinco libros · El aliento que transforma · He de יהוה",
+   r:255,g2:232,b:240,hex:"#ffe8f0"}
+  ,{es:"ו — Vav",he:"ו",
+   ld:[{c:"ו",n:"Vav · 6",d:"El clavo — el eje que une el cielo y la tierra, el conector entre mundos"}],
+   g:6,
+   epic:"Vav significa clavo o gancho. En la Torah del Tabernáculo, los ganchos que unían las cortinas eran Vavim — conectores. 6 representa los seis días de la creación, las seis direcciones del espacio (arriba, abajo, norte, sur, este, oeste). La letra tiene la forma de una línea vertical — el eje del mundo, el pilar que sostiene el cielo sobre la tierra.",
+   sib:"≡ 6 · Los seis días de la creación · El eje vertical · Aparece 6 veces en Bereshit",
+   r:224,g2:240,b:224,hex:"#e0f0e0"}
+  ,{es:"ז — Zayin",he:"ז",
+   ld:[{c:"ז",n:"Zayin · 7",d:"La espada — el guerrero que lucha por lo sagrado, el Shabat como arma espiritual"}],
+   g:7,
+   epic:"Zayin = 7, el número del Shabat. La letra tiene la forma de una corona sobre una espada. El Zohar enseña que Zayin representa la santificación del tiempo — el séptimo día como el arma más poderosa contra el caos. 7 es el número de la completitud: 7 notas musicales, 7 colores del arco iris, 7 planetas visibles a ojo desnudo en la antigüedad.",
+   sib:"≡ 7 · El Shabat · Los siete cielos · La completitud del ciclo",
+   r:240,g2:232,b:255,hex:"#f0e8ff"}
+  ,{es:"ח — Jet",he:"ח",
+   ld:[{c:"ח",n:"Jet · 8",d:"La vida — el número que trasciende los 7 días, la dimensión más allá del tiempo natural"}],
+   g:8,
+   epic:"Jet = 8, uno más allá del 7 natural. La circuncisión se realiza al octavo día — el primer acto que trasciende la naturaleza. En música, la octava repite la misma nota en una frecuencia doble — lo mismo en un nivel superior. Jet es también la primera letra de Jayim (vida) y Jesed (bondad). 8 acostado es el símbolo del infinito ∞.",
+   sib:"≡ 8 · El octavo día · La circuncisión · ∞ — el infinito acostado",
+   r:232,g2:255,b:232,hex:"#e8ffe8"}
+  ,{es:"ט — Tet",he:"ט",
+   ld:[{c:"ט",n:"Tet · 9",d:"La serpiente — el bien oculto, la bondad que se esconde dentro de lo aparentemente malo"}],
+   g:9,
+   epic:"Tet es la única letra cuyo nombre empieza con el sonido Tet pero cuya forma apunta hacia adentro — el bien que se guarda en su interior. Dios vio en el tercer día que era bueno (Tov) dos veces — aquí está el Tet. 9 es el número de los meses de gestación, del fruto que se desarrolla en secreto antes de nacer. El bien que no se ve todavía.",
+   sib:"≡ 9 · Los nueve meses · El bien oculto · Tov (Bueno) comienza con Tet",
+   r:255,g2:248,b:224,hex:"#fff8e0"}
+  ,{es:"י — Yod",he:"י",
+   ld:[{c:"י",n:"Yod · 10",d:"El punto primordial — la chispa más pequeña que contiene toda la creación"}],
+   g:10,
+   epic:"Yod es la letra más pequeña del alfabeto — un simple punto. Sin embargo, todas las demás letras están construidas a partir de Yod. Es la primera letra del nombre de Dios יהוה. El Talmud dice que quien niega el significado de la Yod niega la Torah entera. 10 es la base de nuestro sistema numérico, las 10 sefirot, los 10 mandamientos. El punto que lo contiene todo.",
+   sib:"≡ 10 · Las diez sefirot · Los diez mandamientos · Todas las letras nacen de Yod",
+   r:255,g2:255,b:240,hex:"#fffff0"}
+  ,{es:"כ — Kaf",he:"כ",
+   ld:[{c:"כ",n:"Kaf · 20",d:"La palma de la mano — la corona que se inclina, el poder que se dobla para servir"}],
+   g:20,
+   epic:"Kaf significa palma de la mano. La letra tiene dos formas: Kaf normal y Kaf final (ך). La forma abierta sugiere la mano extendida para dar o recibir. Kaf = 20, la edad de responsabilidad en la tradición judía. La corona (Keter) que desciende para servir. El rey que inclina la mano — el poder al servicio de la vida.",
+   sib:"≡ 20 · La edad de responsabilidad · Keter que desciende · La mano que da y recibe",
+   r:240,g2:232,b:216,hex:"#f0e8d8"}
+  ,{es:"ל — Lamed",he:"ל",
+   ld:[{c:"ל",n:"Lamed · 30",d:"El corazón que aprende — la única letra que supera la línea de escritura, el maestro eterno"}],
+   g:30,
+   epic:"Lamed es la letra más alta del alfabeto hebreo — la única que asciende por encima de la línea de escritura. Significa aprender y enseñar simultáneamente. En hebreo, aprender y enseñar son la misma raíz: Lamed. 30 años fue la edad en que los levitas comenzaban su servicio, la edad de Jesús al comenzar su ministerio. El conocimiento que eleva.",
+   sib:"≡ 30 · La letra más alta · Lamed = aprender y enseñar · 30: edad del comienzo",
+   r:224,g2:248,b:224,hex:"#e0f8e0"}
+  ,{es:"מ — Mem",he:"מ",
+   ld:[{c:"מ",n:"Mem · 40",d:"El agua primordial — el útero cósmico de donde emerge toda vida y todo conocimiento"}],
+   g:40,
+   epic:"Mem = agua (Mayim). Tiene dos formas: abierta (מ) y cerrada (ם). El Mem abierto es el agua que fluye y da vida; el Mem cerrado es el agua contenida, el secreto guardado. 40 días duró el diluvio, 40 años en el desierto, 40 días de Moisés en el Sinaí. El número de la transformación completa — el tiempo que necesita algo para cambiar de naturaleza.",
+   sib:"≡ 40 · Los 40 días del diluvio · Los 40 años en el desierto · La transformación completa",
+   r:216,g2:240,b:255,hex:"#d8f0ff"}
+  ,{es:"נ — Nun",he:"נ",
+   ld:[{c:"נ",n:"Nun · 50",d:"El pez en el océano — el alma que nada en el infinito divino sin necesidad de salir a la superficie"}],
+   g:50,
+   epic:"Nun = pez. La letra tiene la forma de un pez sumergido. Los peces no fueron mencionados en la expulsión del Edén — viven completamente dentro de su elemento, como el alma que vive dentro de lo divino. 50 es el número del Jubileo — cada 50 años todo vuelve a su dueño original. La libertad que regresa. La puerta 50 de la comprensión.",
+   sib:"≡ 50 · El Jubileo · Las 50 puertas de Biná · El pez que no fue expulsado del Edén",
+   r:208,g2:232,b:248,hex:"#d0e8f8"}
+  ,{es:"ס — Samej",he:"ס",
+   ld:[{c:"ס",n:"Samej · 60",d:"El círculo eterno — el apoyo sin principio ni fin, la protección divina que rodea completamente"}],
+   g:60,
+   epic:"Samej es un círculo perfecto — la única letra completamente cerrada sobre sí misma. Representa la protección total, el abrazo que no tiene inicio ni fin. En el Salmo 119, la sección de Samej dice: 'Eres mi escudo y mi esperanza.' 60 es el número de la base sexagesimal — el sistema que usamos para medir el tiempo y los ángulos. El círculo del cosmos.",
+   sib:"≡ 60 · El círculo perfecto · La protección total · La base del tiempo y el espacio",
+   r:232,g2:224,b:255,hex:"#e8e0ff"}
+  ,{es:"ע — Ayin",he:"ע",
+   ld:[{c:"ע",n:"Ayin · 70",d:"El ojo — los 70 rostros de la Torah, la visión que va más allá de lo visible"}],
+   g:70,
+   epic:"Ayin = ojo. La letra tiene la forma de dos ojos unidos — la visión dual, física y espiritual. 70 son los rostros de la Torah (Shivim Panim LaTorah), los 70 pueblos del mundo, los 70 miembros del Sanhedrín, los 70 años del exilio babilónico. Ayin también significa fuente de agua — el ojo como manantial de percepción. Ver es siempre un acto creativo.",
+   sib:"≡ 70 · Los 70 rostros de la Torah · Los 70 pueblos · El ojo y la fuente",
+   r:240,g2:248,b:232,hex:"#f0f8e8"}
+  ,{es:"פ — Pe",he:"פ",
+   ld:[{c:"פ",n:"Pe · 80",d:"La boca — la palabra que crea mundos, el poder más peligroso y más sagrado del ser humano"}],
+   g:80,
+   epic:"Pe = boca. La boca que habla crea realidad — 'Dios dijo: sea la luz, y la luz fue.' El ser humano es el único ser creado que puede imitar este poder. Pe tiene dos formas: abierta (פ) y cerrada (ף). 80 años fue la edad de Moisés al hablar ante el Faraón. La boca que se abre para la liberación. El habla como acto divino.",
+   sib:"≡ 80 · La boca de Moisés · La palabra que libera · El habla como imitación divina",
+   r:255,g2:232,b:216,hex:"#ffe8d8"}
+  ,{es:"צ — Tzadik",he:"צ",
+   ld:[{c:"צ",n:"Tzadik · 90",d:"El justo — el ser humano que ha transformado su naturaleza animal en naturaleza sagrada"}],
+   g:90,
+   epic:"Tzadik = el justo. La letra tiene la forma de un hombre inclinado — la humildad del verdadero sabio. 36 tzadikim (dos veces 18, dos veces Vida) sostienen el mundo en cada generación, ocultos e ignorados. Tzadik es el fundamento sobre el que se sostiene la realidad. La letra aparece en Tzimtzum — la contracción que hace posible la creación.",
+   sib:"≡ 90 · Los 36 tzadikim ocultos · El justo que sostiene el mundo · Raíz de Tzimtzum",
+   r:232,g2:255,b:232,hex:"#e8ffe8"}
+  ,{es:"ק — Qof",he:"ק",
+   ld:[{c:"ק",n:"Qof · 100",d:"El ojo de la aguja — el umbral entre lo sagrado y lo profano, lo posible y lo imposible"}],
+   g:100,
+   epic:"Qof = nuca, o según algunos, mono. La letra describe la tensión entre lo alto y lo bajo — la cabeza que asciende y la cola que desciende. 100 es el primer número de tres cifras, el umbral de una nueva magnitud. Abraham tenía 100 años cuando nació Isaac — lo imposible hecho posible. El camello pasa por el ojo de la aguja cuando lo imposible se vuelve necesario.",
+   sib:"≡ 100 · Abraham a los 100 años · Lo imposible hecho posible · El umbral de nueva magnitud",
+   r:248,g2:240,b:224,hex:"#f8f0e0"}
+  ,{es:"ר — Resh",he:"ר",
+   ld:[{c:"ר",n:"Resh · 200",d:"La cabeza — la inteligencia que recibe la revelación, el comienzo de toda comprensión"}],
+   g:200,
+   epic:"Resh = cabeza. Es la letra de Rosh (cabeza), Reshit (principio), Ruaj (espíritu). La forma de la letra es una cabeza inclinada — la inteligencia que se inclina para aprender. 200 es el valor de Resh y también aparece en Or (Luz: Aleph+Vav+Resh = 1+6+200 = 207). La cabeza que recibe la luz. El principio inteligente que da forma al caos.",
+   sib:"≡ 200 · Rosh (cabeza) · Ruaj (espíritu) · Reshit (principio) · Componente de Or (Luz)",
+   r:232,g2:232,b:255,hex:"#e8e8ff"}
+  ,{es:"ש — Shin",he:"ש",
+   ld:[{c:"ש",n:"Shin · 300",d:"El fuego sagrado — las tres llamas que representan los tres patriarcas y el nombre de Dios en el fuego"}],
+   g:300,
+   epic:"Shin tiene tres brazos — tres llamas. Es la letra que Dios escribió en la frente del primer hombre según el Midrash. Es la primera letra de Shaddai (nombre divino), Shabat, Shalom, Shejiná. 300 guerreros de Gedeón. La mezuzá lleva una Shin en su exterior. El fuego que no consume — como la zarza ardiente de Moisés. La letra sagrada por excelencia.",
+   sib:"≡ 300 · Shaddai · Shabat · Shalom · Shejiná · La letra de la mezuzá",
+   r:255,g2:240,b:224,hex:"#fff0e0"}
+  ,{es:"ת — Tav",he:"ת",
+   ld:[{c:"ת",n:"Tav · 400",d:"El sello — la última letra, la firma de Dios en la creación, la marca que distingue al justo"}],
+   g:400,
+   epic:"Tav = marca o sello. Es la última letra del alfabeto — la firma al pie de toda la creación. Emet (Verdad) termina con Tav. Sheket (mentira) no tiene Tav. El ángel en Ezequiel marca con una Tav a los justos para salvarlos. 400 años duró la esclavitud en Egipto. La Tav cierra el ciclo que comenzó con Aleph — de la potencialidad al sello final, de el silencio a la firma.",
+   sib:"≡ 400 · El sello de Dios · La firma de la Verdad · 400 años de esclavitud en Egipto",
+   r:232,g2:240,b:232,hex:"#e8f0e8"}
+
 ];
 
 // ══════════════════════════════════════════════
@@ -786,7 +987,12 @@ function selectWord(i){
     he.textContent=w.he;
     he.style.color = w.hex; // saturated color always contrasts against particles
 
-    document.getElementById('co-word').textContent=w.es.toUpperCase();
+    // For single-letter entries (i>=26), show just the name without the glyph prefix
+    const isLetterEntry = cur >= 26;
+    const displayName = isLetterEntry 
+      ? w.es.split('—')[1]?.trim().toUpperCase() || w.es.toUpperCase()
+      : w.es.toUpperCase();
+    document.getElementById('co-word').textContent=displayName;
 
     document.getElementById('co-gem-num').textContent=w.g;
 
@@ -803,14 +1009,19 @@ function selectWord(i){
       const d=document.createElement('div');
       d.className='pl';
       d.style.borderColor=`rgba(${w.r},${w.g2},${w.b},0.18)`;
-      d.innerHTML=`
-        <div class="pl-he-block" style="background:rgba(${w.r},${w.g2},${w.b},0.07)">
-          <div class="pl-he" style="color:${w.hex}">${l.c}</div>
-        </div>
-        <div class="pl-text">
-          <div class="pl-name">${l.n}</div>
-          <div class="pl-desc">${l.d}</div>
-        </div>`;
+      const isLtr = cur >= 26;
+      d.innerHTML = isLtr
+        ? `<div class="pl-text" style="padding:10px 16px">
+             <div class="pl-name">${l.n}</div>
+             <div class="pl-desc">${l.d}</div>
+           </div>`
+        : `<div class="pl-he-block" style="background:rgba(${w.r},${w.g2},${w.b},0.07)">
+             <div class="pl-he" style="color:${w.hex}">${l.c}</div>
+           </div>
+           <div class="pl-text">
+             <div class="pl-name">${l.n}</div>
+             <div class="pl-desc">${l.d}</div>
+           </div>`;
       pl.appendChild(d);
       setTimeout(()=>d.classList.add('in'),li*80+80);
     });
@@ -839,26 +1050,41 @@ function prevWord(){selectWord((cur-1+WORDS.length)%WORDS.length);}
 const row1=document.getElementById('hud-top');
 const row2=document.getElementById('hud-bottom');
 
-// Sefirot indices in Etz Chaim order (top to bottom)
-const SEFIRA_IDX = [16,17,18,15,19,20,21,22,23,13,24];
+// Sefirot indices in Etz Chaim order per user:
+// Ein Sof(14), Keter(16), Jojmah(17), Biná(18), Jesed(19),
+// Guevurá(20), Tiferet(21), Netzaj(22), Hod(23), Yesod(13), Maljut(24)
+// Da'at(15) stays in row1 as a concept
+const SEFIRA_IDX = [14,16,17,18,19,20,21,22,23,13,24];
 const sefirotSet = new Set(SEFIRA_IDX);
 
-function makeBtn(i){
+function makeBtn(i, isLetter){
   const w=WORDS[i];
   const b=document.createElement('button');
-  b.className='wb'; b.dataset.idx=i;
-  const esName=w.es.split('—')[0].split('—')[0].trim();
+  b.className= isLetter ? 'wb wb-letter' : 'wb';
+  b.dataset.idx=i;
+  // Letter entries: "א — Aleph" → show "Aleph" (after the dash)
+  // Word entries:   "Kabbalah" or "Ahavah — Amor" → show first part
+  const parts = w.es.split('—');
+  const esName = isLetter && parts.length > 1
+    ? parts[1].trim()
+    : parts[0].trim();
   b.innerHTML=`<span class="wb-he">${w.he}</span><span class="wb-es">${esName}</span>`;
   b.onclick=()=>selectWord(i);
   return b;
 }
 
 // Row 1: conceptos (all except sefirot)
-WORDS.forEach((_,i)=>{ if(!sefirotSet.has(i)) row1.appendChild(makeBtn(i)); });
+WORDS.forEach((_,i)=>{ if(!sefirotSet.has(i) && i<26) row1.appendChild(makeBtn(i)); });
 
 // Row 2: sefirot in Etz Chaim order
 SEFIRA_IDX.forEach(i=>row2.appendChild(makeBtn(i)));
 
+// Row 3: 22 Hebrew letters in order
+const row3=document.getElementById('hud-letters');
+// Letters are indices 26-47
+for(let i=26; i<WORDS.length; i++){
+  row3.appendChild(makeBtn(i, true));
+}
 // Now HUD is fully populated — measure and position
 positionOverlay();
 
@@ -868,9 +1094,21 @@ positionOverlay();
 // Position center-overlay dynamically based on HUD height
 function positionOverlay(){
   const hudH = document.getElementById('hud').offsetHeight;
-  document.getElementById('center-overlay').style.top = hudH + 'px';
+  if(hudH <= 0) return;
+  const overlay = document.getElementById('center-overlay');
+  const panel = document.getElementById('panel');
+  // Panel height from CSS (50vh mobile, 47vh desktop)
+  const panelH = panel.offsetHeight;
+  const available = window.innerHeight - hudH - panelH;
+  overlay.style.top = hudH + 'px';
+  overlay.style.height = Math.max(available, 80) + 'px';
+  overlay.style.bottom = 'auto';
 }
 window.addEventListener('resize', positionOverlay);
+document.fonts.ready.then(positionOverlay);
+setTimeout(positionOverlay, 100);
+setTimeout(positionOverlay, 400);
+setTimeout(positionOverlay, 900);
 
 function animate(){
   requestAnimationFrame(animate);
@@ -952,7 +1190,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft'||e.key==='ArrowUp') prevWord();
 });
 
-selectWord(0); animate();
+animate(); setTimeout(()=>selectWord(25), 100);
 </script>
 </body>
 </html>
